@@ -17,7 +17,7 @@ export default function DateRangePicker({ fromDate, toDate, onFromChange, onToCh
     cursor-pointer hover:border-slate-300 ${focusRing}`
 
   return (
-    <div className="flex items-end gap-3">
+    <div dir="rtl" className="flex items-end gap-3">
       {/* DOM first → visual RIGHT in RTL = من تاريخ (from) */}
       <div className="flex-1">
         <p className="text-xs text-slate-500 text-right mb-1.5 font-medium">من تاريخ</p>

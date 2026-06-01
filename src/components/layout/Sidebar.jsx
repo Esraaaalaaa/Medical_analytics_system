@@ -113,12 +113,17 @@ export default function Sidebar({
 
           /* ─ Urgent special button ─ */
           if (item.urgent) {
+            const urgentActive = location.pathname === '/urgent'
             return (
-              <div key={item.id} className="px-3 mb-1">
+              <div dir="rtl" key={item.id} className="px-3 mb-1">
                 <button
                   onClick={() => navigate('/urgent')}
-                  className="w-full flex items-center justify-end gap-3 px-4 py-3 text-red-400 rounded-lg
-                    border border-red-500/40 bg-red-500/10 hover:bg-red-500/20 transition-all duration-150"
+                  className={`w-full flex items-center justify-end gap-3 px-4 py-3 text-red-400 rounded-lg
+                    border transition-all duration-150 ${
+                    urgentActive
+                      ? 'border-red-500/60 bg-red-500/20'
+                      : 'border-red-500/40 bg-red-500/10 hover:bg-red-500/20'
+                  }`}
                 >
                   <span className="text-[13.5px] font-semibold">Urgent</span>
                   <Icon className="w-[18px] h-[18px]" />

@@ -1,9 +1,16 @@
+const ICON_VARIANTS = {
+  sky: { bg: 'bg-sky-100',  icon: 'text-sky-600'  },
+  red: { bg: 'bg-red-100',  icon: 'text-red-500'  },
+}
+
 /**
  * PageHeader — page title + subtitle block.
  * icon: lucide icon component
- * rightContent: optional JSX rendered on the left side (visual) in RTL
+ * iconVariant: 'sky' (default) | 'red'
+ * leftContent: optional JSX rendered on the left side (visual) in RTL
  */
-export default function PageHeader({ title, subtitle, icon: Icon, leftContent }) {
+export default function PageHeader({ title, subtitle, icon: Icon, iconVariant = 'sky', leftContent }) {
+  const iv = ICON_VARIANTS[iconVariant] ?? ICON_VARIANTS.sky
   return (
     <div className="flex items-start justify-between mb-6">
       {/* Visual left: optional extra content (e.g. download button) */}
@@ -16,8 +23,8 @@ export default function PageHeader({ title, subtitle, icon: Icon, leftContent })
         <div className="flex items-center justify-end gap-2.5">
           <h2 className="text-lg font-bold text-slate-800 leading-tight">{title}</h2>
           {Icon && (
-            <div className="w-9 h-9 rounded-xl bg-sky-100 flex items-center justify-center shrink-0">
-              <Icon className="w-5 h-5 text-sky-600" strokeWidth={1.8} />
+            <div className={`w-9 h-9 rounded-xl ${iv.bg} flex items-center justify-center shrink-0`}>
+              <Icon className={`w-5 h-5 ${iv.icon}`} strokeWidth={1.8} />
             </div>
           )}
         </div>
