@@ -96,7 +96,7 @@ export default function PresidentFinance() {
         </div>
 
         {/* Table */}
-        <div>
+        <div dir="rtl">
           <p className="text-xs text-slate-400 text-right mb-2">
             اضغط على أي صف لعرض التفاصيل
           </p>
@@ -105,6 +105,7 @@ export default function PresidentFinance() {
             groups={GROUPS}
             data={TABLE_DATA}
             onRowClick={handleRowClick}
+            rtl
           />
         </div>
       </div>
