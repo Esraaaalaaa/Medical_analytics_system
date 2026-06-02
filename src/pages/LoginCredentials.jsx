@@ -12,6 +12,7 @@ import LoginBrandPanel from '../components/login/LoginBrandPanel'
 import LoginMobileHeader from '../components/login/LoginMobileHeader'
 import { isValidRole, ROLES } from '../lib/authRoles'
 import { setSession } from '../lib/authSession'
+import { validateCredentials, CREDENTIALS } from '../lib/credentials'
 
 export default function LoginCredentials() {
   const navigate = useNavigate()
@@ -23,6 +24,7 @@ export default function LoginCredentials() {
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (!isValidRole(role)) return
@@ -49,6 +51,11 @@ export default function LoginCredentials() {
     e.preventDefault()
     if (!username.trim() || !password.trim()) return
 
+    if (!validateCredentials(role, username, password)) {
+      setError('اسم المستخدم أو كلمة المرور غير صحيحة')
+      return
+    }
+    setError('')
     setLoading(true)
 
     if (rememberMe) {
@@ -109,7 +116,7 @@ export default function LoginCredentials() {
                     id="username"
                     type="text"
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={(e) => { setUsername(e.target.value); setError('') }}
                     placeholder="أدخل اسم المستخدم..."
                     className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
                     autoComplete="username"
@@ -135,7 +142,7 @@ export default function LoginCredentials() {
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => { setPassword(e.target.value); setError('') }}
                     placeholder="••••••••"
                     className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none tracking-widest"
                     autoComplete="current-password"
@@ -156,6 +163,10 @@ export default function LoginCredentials() {
                 </div>
               </div>
             </div>
+
+            {error && (
+              <p className="text-sm text-red-500 font-medium text-center">{error}</p>
+            )}
 
             <div className="flex items-center justify-between pt-2">
               <label className="flex items-center gap-2 cursor-pointer">
@@ -195,6 +206,14 @@ export default function LoginCredentials() {
               <LogIn size={20} strokeWidth={2} />
             </button>
           </form>
+{/* 
+          {CREDENTIALS[role] && (
+            <div className="mt-4 bg-muted/40 border border-border rounded-lg px-4 py-3 text-xs text-muted-foreground space-y-1" dir="rtl">
+              <p className="font-bold text-foreground">بيانات تجريبية:</p>
+              <p>اسم المستخدم: <span className="font-mono font-bold text-foreground">{CREDENTIALS[role].username}</span></p>
+              <p>كلمة المرور: <span className="font-mono font-bold text-foreground">{CREDENTIALS[role].password}</span></p>
+            </div>
+          )} */}
 
           <button
             type="button"

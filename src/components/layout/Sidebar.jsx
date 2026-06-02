@@ -18,9 +18,10 @@ import {
 } from 'lucide-react'
 import { getSession, clearSession } from '../../lib/authSession'
 import { getRoleProfile } from '../../lib/authRoles'
+import { canAccessPath } from '../../lib/roleAccess'
 
 const NAV_ITEMS = [
-  { id: 'urgent',     label: 'Urgent',     icon: AlertTriangle, urgent: true },
+  { id: 'urgent', label: 'Urgent', icon: AlertTriangle, path: '/urgent', urgent: true },
   { id: 'mailbox',    label: 'Mailbox',    icon: Mail,          path: '/mailbox', badge: 3 },
   {
     id: 'statistics',
@@ -28,7 +29,7 @@ const NAV_ITEMS = [
     icon: BarChart2,
     subItems: [
       { id: 'secretary-stats', label: 'عرض الأمين العام', path: '/statistics',           icon: ClipboardList },
-      { id: 'president-stats', label: 'عرض الرئيس',      path: '/statistics/president', icon: LayoutGrid },
+      { id: 'president-stats', label: 'لوحة المؤشرات الطبية', path: '/statistics/president', icon: LayoutGrid },
       { id: 'director-stats',  label: 'عرض المدير',      path: '/statistics/director',  icon: Building2 },
     ],
   },
@@ -37,7 +38,7 @@ const NAV_ITEMS = [
     label: 'Finance',
     icon: DollarSign,
     subItems: [
-      { id: 'president-finance', label: 'الملخص المجمع', path: '/president-finance', icon: LayoutGrid },
+      { id: 'president-finance', label: 'الملخص المالي المجمع', path: '/president-finance', icon: LayoutGrid },
       { id: 'director-finance', label: 'الملخص المالي', path: '/director-finance/alexandria', icon: Building2 },
       { id: 'periodic-report', label: 'التقرير الدوري', path: '/periodic-report', icon: ClipboardList },
     ],
@@ -50,15 +51,19 @@ const matchesSub = (sub, pathname) =>
   pathname === sub.path ||
   pathname.startsWith('/' + sub.path.split('/')[1] + '/')
 
-function resolveActiveId(pathname, activeNavId) {
+function resolveActiveId(pathname, activeNavId, allowedNavItems) {
   if (activeNavId) return activeNavId
-  if (pathname === '/home' || pathname === '/urgent') return 'urgent'
-  for (const item of NAV_ITEMS) {
-    if (item.path && (pathname === item.path || pathname.startsWith(item.path + '/'))) {
+
+  for (const item of allowedNavItems) {
+    if (
+      item.path &&
+      (pathname === item.path || pathname.startsWith(item.path + '/'))
+    ) {
       return item.id
     }
     if (item.subItems?.some((s) => matchesSub(s, pathname))) return item.id
   }
+
   return null
 }
 
@@ -71,27 +76,36 @@ export default function Sidebar({
   const navigate = useNavigate()
   const session = getSession()
   const profile = getRoleProfile(session?.role)
+  const role = session?.role
+
+  const allowedNavItems = NAV_ITEMS.filter((item) => {
+    if (item.path) return canAccessPath(role, item.path)
+    if (item.subItems) return item.subItems.some((sub) => canAccessPath(role, sub.path))
+    return false
+  })
 
   const userName = userNameProp ?? profile?.userName ?? 'مدير مستشفى'
   const userSub = userSubProp ?? profile?.userSub ?? 'مستشفيات جامعة الإسكندرية'
 
-  const activeId = resolveActiveId(location.pathname, activeNavId)
+  const activeId = resolveActiveId(location.pathname, activeNavId, allowedNavItems)
 
   const [expandedId, setExpandedId] = useState(() => {
-    for (const item of NAV_ITEMS) {
-      if (item.subItems?.some((s) => matchesSub(s, location.pathname))) return item.id
+    for (const item of allowedNavItems) {
+      if (item.subItems?.some((s) => matchesSub(s, location.pathname))) {
+        return item.id
+      }
     }
     return null
   })
 
   useEffect(() => {
-    for (const item of NAV_ITEMS) {
+    for (const item of allowedNavItems) {
       if (item.subItems?.some((s) => matchesSub(s, location.pathname))) {
         setExpandedId(item.id)
         return
       }
     }
-  }, [location.pathname])
+  }, [location.pathname, role])
 
   const navItemClass = (item) => {
     const isActive = activeId === item.id
@@ -141,11 +155,14 @@ export default function Sidebar({
 
       <nav className="flex-1 overflow-y-auto py-4 flex flex-col">
         <ul className="space-y-1 px-2 flex-1">
-          {NAV_ITEMS.map((item) => {
+          {allowedNavItems.map((item) => {
             const Icon = item.icon
             const isExpanded = expandedId === item.id
-            const hasActiveChild = item.subItems?.some((s) =>
-              matchesSub(s, location.pathname),
+            const subItemsAllowed = item.subItems?.filter((sub) =>
+              canAccessPath(role, sub.path),
+            )
+            const hasActiveChild = subItemsAllowed?.some((sub) =>
+              matchesSub(sub, location.pathname),
             )
 
             return (
@@ -170,9 +187,9 @@ export default function Sidebar({
                   )}
                 </button>
 
-                {item.subItems && isExpanded && (
+                {subItemsAllowed && subItemsAllowed.length > 0 && isExpanded && (
                   <ul className="mt-1 mr-2 border-r-2 border-primary-foreground/20 pr-1 space-y-0.5">
-                    {item.subItems.map((sub) => {
+                    {subItemsAllowed.map((sub) => {
                       const SubIcon = sub.icon
                       const subActive = matchesSub(sub, location.pathname)
                       return (
@@ -197,7 +214,7 @@ export default function Sidebar({
 
                 {hasActiveChild && !isExpanded && item.subItems && (
                   <ul className="mt-1 mr-2 border-r-2 border-primary-foreground/20 pr-1 space-y-0.5">
-                    {item.subItems.map((sub) => {
+                    {subItemsAllowed.map((sub) => {
                       const SubIcon = sub.icon
                       const subActive = matchesSub(sub, location.pathname)
                       if (!subActive) return null

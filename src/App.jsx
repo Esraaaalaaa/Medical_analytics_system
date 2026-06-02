@@ -20,20 +20,104 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="/login-credentials" element={<LoginCredentials />} />
-        <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+        <Route path="/login/credentials" element={<LoginCredentials />} />
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/" element={<Navigate to="/president-finance" replace />} />
-        <Route path="/urgent" element={<UrgentCirculars />} />
-        <Route path="/news" element={<News />} />
-        <Route path="/meetings" element={<Meetings />} />
-        <Route path="/mailbox" element={<Mailbox />} />
-        <Route path="/statistics" element={<Statistics />} />
-        <Route path="/president-finance" element={<PresidentFinance />} />
-        <Route path="/director-finance" element={<DirectorFinance />} />
-        <Route path="/director-finance/:hospitalId" element={<DirectorFinance />} />
-        <Route path="/periodic-report" element={<PeriodicReport />} />
-        <Route path="/statistics/president" element={<PresidentStatistics />} />
-        <Route path="/statistics/director" element={<DirectorStatistics />} />
+        <Route
+          path="/urgent"
+          element={
+            <ProtectedRoute allowedRoles={['director']}>
+              <UrgentCirculars />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/news"
+          element={
+            <ProtectedRoute allowedRoles={['director']}>
+              <News />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/meetings"
+          element={
+            <ProtectedRoute allowedRoles={['director']}>
+              <Meetings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/mailbox"
+          element={
+            <ProtectedRoute allowedRoles={['director']}>
+              <Mailbox />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/statistics"
+          element={
+            <ProtectedRoute allowedRoles={['secretary']}>
+              <Statistics />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/president-finance"
+          element={
+            <ProtectedRoute allowedRoles={['president', 'director']}>
+              <PresidentFinance />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/director-finance"
+          element={
+            <ProtectedRoute allowedRoles={['director']}>
+              <DirectorFinance />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/director-finance/:hospitalId"
+          element={
+            <ProtectedRoute allowedRoles={['director']}>
+              <DirectorFinance />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/periodic-report"
+          element={
+            <ProtectedRoute allowedRoles={['secretary', 'director']}>
+              <PeriodicReport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/statistics/president"
+          element={
+            <ProtectedRoute allowedRoles={['president']}>
+              <PresidentStatistics />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/statistics/director"
+          element={
+            <ProtectedRoute allowedRoles={['director']}>
+              <DirectorStatistics />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   )
