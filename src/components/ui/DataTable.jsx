@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 
 /**
  * DataTable — generic table with optional two-level grouped headers.
@@ -13,42 +13,52 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
  * data: array of row objects keyed by column.key
  * onRowClick(row): optional, makes rows clickable
  */
-export default function DataTable({ columns = [], groups = [], data = [], onRowClick, rtl = false }) {
-  const borderSide = rtl ? 'border-r' : 'border-l'
-  const ChevronIcon = rtl ? ChevronRight : ChevronLeft
+export default function DataTable({ columns = [], groups = [], data = [], onRowClick, noTopRadius = false, dir = 'rtl', bodyDir }) {
   const hasGroups = groups.length > 0
   const ungrouped = columns.filter(c => !c.group)
   const grouped   = columns.filter(c => c.group)
+  
+  // If bodyDir is not specified, use same as table dir
+  const actualBodyDir = bodyDir || dir
 
   const renderCell = (col, row) => {
     const raw = row[col.key]
-    const isEmpty = raw === '—' || raw === null || raw === undefined || raw === ''
+    const isEmpty = raw === '—' || raw === null || raw === undefined || raw === '' || raw === 0
 
     if (isEmpty) {
-      return <span className="text-slate-300 select-none">—</span>
+      return <span className="text-slate-400 select-none text-sm">0</span>
     }
 
-    let cls = 'text-slate-700'
+    // Format numbers with commas
+    const formatted = typeof raw === 'number' ? raw.toLocaleString() : raw
+
+    let cls = 'text-slate-800 font-medium'
     if (col.group === 'debt') {
-      cls = col.highlight ? 'text-red-600 font-bold' : 'text-red-500'
+      cls = col.highlight ? 'text-red-600 font-bold' : 'text-red-600 font-medium'
     } else if (col.group === 'recv') {
-      cls = col.highlight ? 'text-emerald-600 font-bold' : 'text-emerald-500'
+      cls = col.highlight ? 'text-emerald-600 font-bold' : 'text-emerald-600 font-medium'
+    } else if (col.group === 'emergency') {
+      cls = 'text-slate-800 font-medium'
+    } else if (col.group === 'inpatient') {
+      cls = 'text-slate-800 font-medium'
+    } else if (col.group === 'outpatient') {
+      cls = 'text-slate-800 font-medium'
     }
 
-    return <span className={cls}>{raw}</span>
+    return <span className={cls}>{formatted}</span>
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm bg-white">
-      <table className="w-full text-sm border-collapse">
+    <div className={`overflow-x-auto border border-slate-200 shadow-sm bg-white ${noTopRadius ? 'rounded-b-xl' : 'rounded-xl'}`}>
+      <table className="w-full text-sm border-collapse" dir={dir}>
         <thead>
           {/* Row 1: ungrouped (rowSpan=2) + group headers */}
-          <tr className="bg-slate-50 border-b border-slate-200">
+          <tr className="bg-slate-100 border-b border-slate-200">
             {ungrouped.map(col => (
               <th
                 key={col.key}
                 rowSpan={hasGroups ? 2 : 1}
-                className={`px-4 py-3 font-semibold text-slate-600 ${borderSide} border-slate-200 last:border-0 align-middle ${col.className || 'text-center'}`}
+                className={`px-4 py-3.5 font-bold text-slate-700 border-l border-slate-200 last:border-l-0 align-middle text-sm ${col.className || 'text-center'}`}
               >
                 {col.header}
               </th>
@@ -57,7 +67,7 @@ export default function DataTable({ columns = [], groups = [], data = [], onRowC
               <th
                 key={group.id}
                 colSpan={columns.filter(c => c.group === group.id).length}
-                className={`px-4 py-2.5 text-center text-[13px] font-bold ${borderSide} border-slate-200 ${group.colorClass || 'text-slate-600'} ${group.bgClass || ''}`}
+                className={`px-4 py-3 text-center text-sm font-bold border-l border-slate-200 ${group.colorClass || 'text-slate-700'} ${group.bgClass || 'bg-slate-50'}`}
               >
                 {group.label}
               </th>
@@ -66,22 +76,29 @@ export default function DataTable({ columns = [], groups = [], data = [], onRowC
 
           {/* Row 2: grouped sub-headers */}
           {hasGroups && (
-            <tr className="border-b-2 border-slate-200">
-              {grouped.map(col => (
-                <th
-                  key={col.key}
-                  className={`px-4 py-2 text-center text-[12px] font-semibold text-slate-500 ${borderSide} border-slate-100 ${
-                    col.group === 'debt' ? 'bg-red-50/60' : 'bg-emerald-50/60'
-                  }`}
-                >
-                  {col.header}
-                </th>
-              ))}
+            <tr className="bg-white border-b-2 border-slate-200">
+              {grouped.map(col => {
+                let bgColor = 'bg-slate-50'
+                if (col.group === 'debt') bgColor = 'bg-red-50/60'
+                else if (col.group === 'recv') bgColor = 'bg-emerald-50/60'
+                else if (col.group === 'emergency') bgColor = 'bg-red-50/60'
+                else if (col.group === 'inpatient') bgColor = 'bg-blue-50/60'
+                else if (col.group === 'outpatient') bgColor = 'bg-slate-50'
+
+                return (
+                  <th
+                    key={col.key}
+                    className={`px-4 py-2.5 text-center text-xs font-semibold text-slate-700 border-l border-slate-100 ${bgColor}`}
+                  >
+                    {col.header}
+                  </th>
+                )
+              })}
             </tr>
           )}
         </thead>
 
-        <tbody>
+        <tbody dir={actualBodyDir}>
           {data.map((row, i) => (
             <tr
               key={row.id ?? i}
@@ -93,14 +110,14 @@ export default function DataTable({ columns = [], groups = [], data = [], onRowC
               {columns.map(col => (
                 <td
                   key={col.key}
-                  className={`px-4 py-3.5 ${borderSide} border-slate-100 last:border-0 ${col.className || 'text-center'}`}
+                  className={`px-4 py-3.5 border-l border-slate-100 last:border-l-0 ${col.className || 'text-center'}`}
                 >
                   {renderCell(col, row)}
                 </td>
               ))}
               {onRowClick && (
                 <td className="w-8 pl-2 pr-3 text-slate-300 group-hover:text-sky-500 transition-colors">
-                  <ChevronIcon className="w-4 h-4" />
+                  <ChevronLeft className="w-4 h-4" />
                 </td>
               )}
             </tr>

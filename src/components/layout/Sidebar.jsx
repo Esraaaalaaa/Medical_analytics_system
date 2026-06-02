@@ -28,7 +28,7 @@ const NAV_ITEMS = [
     label: 'Statistics',
     icon: BarChart2,
     subItems: [
-      { id: 'secretary-stats', label: 'عرض الأمين العام', path: '/statistics',           icon: ClipboardList },
+      { id: 'secretary-stats', label: 'عرض السكرتير',  path: '/statistics',           icon: ClipboardList },
       { id: 'president-stats', label: 'لوحة المؤشرات الطبية', path: '/statistics/president', icon: LayoutGrid },
       { id: 'director-stats',  label: 'عرض المدير',      path: '/statistics/director',  icon: Building2 },
     ],

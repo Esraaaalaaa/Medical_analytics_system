@@ -4,62 +4,62 @@ import PageHeader from '../components/ui/PageHeader'
 import DateFilterBar from '../components/ui/DateFilterBar'
 import { BarChart3 } from 'lucide-react'
 
-// Secretary form sections
+// Secretary form sections matching the table columns
 const SECRETARY_FORM_SECTIONS = [
+  {
+    title: 'العمليات الجراحية',
+    titleEn: 'Surgical Operations',
+    fields: [
+      { id: 'surgicalOperations', label: 'العمليات الجراحية', placeholder: '0' },
+    ]
+  },
+  {
+    title: 'حالات مرضى داخلي',
+    titleEn: 'Inpatient Cases',
+    fields: [
+      { id: 'inpatientCases', label: 'حالات مرضى داخلي', placeholder: '0' },
+    ]
+  },
   {
     title: 'حالات الطوارئ',
     titleEn: 'Emergency Cases',
     fields: [
-      { id: 'emergencyCases', label: 'حالات الطوارئ', labelEn: 'Emergency Cases', placeholder: '0' },
+      { id: 'emergencyCases', label: 'حالات الطوارئ', placeholder: '0' },
     ]
   },
   {
-    title: 'جلسات العلاج الطبيعي',
+    title: 'جلسات الغسيل الكلوي',
     titleEn: 'Dialysis Sessions',
     fields: [
-      { id: 'dialysisSessions', label: 'جلسات الغسيل الكلوي', labelEn: 'Dialysis Sessions', placeholder: '0' },
-    ]
-  },
-  {
-    title: 'جلسات العلاج الكيميائي',
-    titleEn: 'Chemotherapy Sessions',
-    fields: [
-      { id: 'chemotherapySessions', label: 'جلسات العلاج الكيميائي', labelEn: 'Chemotherapy Sessions', placeholder: '0' },
+      { id: 'dialysisSessions', label: 'جلسات الغسيل الكلوي', placeholder: '0' },
     ]
   },
   {
     title: 'جلسات العلاج الإشعاعي',
     titleEn: 'Radiotherapy Sessions',
     fields: [
-      { id: 'radiotherapySessions', label: 'جلسات العلاج الإشعاعي', labelEn: 'Radiotherapy Sessions', placeholder: '0' },
+      { id: 'radiotherapySessions', label: 'جلسات العلاج الإشعاعي', placeholder: '0' },
     ]
   },
   {
-    title: 'الحالات الخارجية',
+    title: 'جلسات العلاج الكيميائي',
+    titleEn: 'Chemotherapy Sessions',
+    fields: [
+      { id: 'chemotherapySessions', label: 'جلسات العلاج الكيميائي', placeholder: '0' },
+    ]
+  },
+  {
+    title: 'الكشوف على العيادات الخارجية',
     titleEn: 'Outpatient Clinic Visits',
     fields: [
-      { id: 'outpatientVisits', label: 'الكشوف على العيادات الخارجية', labelEn: 'Outpatient Clinic Visits', placeholder: '0' },
+      { id: 'outpatientVisits', label: 'الكشوف على العيادات الخارجية', placeholder: '0' },
     ]
   },
   {
-    title: 'مرضى العناية المركزة',
+    title: 'مرضى غرف عناية مركزة',
     titleEn: 'ICU Patients',
     fields: [
-      { id: 'icuPatients', label: 'مرضى غرف عناية مركزة', labelEn: 'ICU Patients', placeholder: '0' },
-    ]
-  },
-  {
-    title: 'العمليات الجراحية',
-    titleEn: 'Surgical Operations',
-    fields: [
-      { id: 'surgicalOperations', label: 'العمليات الجراحية', labelEn: 'Surgical Operations', placeholder: '0' },
-    ]
-  },
-  {
-    title: 'حالات الطوارئ',
-    titleEn: 'Inpatient Cases',
-    fields: [
-      { id: 'inpatientCases', label: 'حالات مرضى داخلي', labelEn: 'Inpatient Cases', placeholder: '0' },
+      { id: 'icuPatients', label: 'مرضى غرف عناية مركزة', placeholder: '0' },
     ]
   },
 ]
@@ -75,7 +75,7 @@ export default function Statistics() {
 
   return (
     <MainLayout
-      userName="أمين عام"
+      userName="سكرتير"
       userSub="إحصائيات النشاط المستشفى"
     >
       <div dir="ltr" className="p-6 max-w-full mx-auto">
@@ -108,20 +108,13 @@ export default function Statistics() {
           <div className="grid grid-cols-2 gap-6 mb-8">
             {SECRETARY_FORM_SECTIONS.map((section, idx) => (
               <div key={idx} className="space-y-3">
-                {/* Section Header */}
-                <div className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2">
-                  <h3 className="font-bold text-slate-700 text-sm">
-                    {section.title}
-                  </h3>
-                  <p className="text-xs text-slate-400">{section.titleEn}</p>
-                </div>
-
                 {/* Fields */}
                 {section.fields.map((field) => (
-                  <div key={field.id} className="space-y-1.5">
-                    <label className="block text-sm font-medium text-slate-600 text-right">
+                  <div key={field.id} className="space-y-2">
+                    <label className="block text-sm font-semibold text-slate-700 text-right">
                       {field.label}
                     </label>
+                    <p className="text-xs text-slate-400 text-right">{section.titleEn}</p>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
                         #
