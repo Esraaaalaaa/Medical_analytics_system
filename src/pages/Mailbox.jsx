@@ -73,7 +73,7 @@ export default function Mailbox() {
   return (
     <MainLayout>
       {/* dir="ltr": first child → LEFT (detail), second child → RIGHT (list) */}
-      <div dir="ltr" className="flex h-full overflow-hidden">
+      <div dir="ltr" className="flex h-full overflow-hidden  max-w-8xl" >
 
         {/* ── LEFT: detail pane ── */}
         <div className="flex-1 flex flex-col overflow-hidden border-r border-slate-200">
@@ -172,7 +172,7 @@ export default function Mailbox() {
         </div>
 
         {/* ── RIGHT: message list ── */}
-        <div className="w-[285px] shrink-0 flex flex-col overflow-hidden bg-white" dir="rtl">
+        <div className="w-[285px] shrink-0 flex flex-col overflow-hidden bg-white"  max-w-8xl dir="rtl">
 
           {/* Header */}
           <div className="px-4 pt-5 pb-3 border-b border-slate-200 shrink-0">
