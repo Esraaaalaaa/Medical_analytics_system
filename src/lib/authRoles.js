@@ -13,7 +13,7 @@ export const ROLES = {
     userName: 'مدير مستشفى',
     userSub: 'مستشفيات جامعة الإسكندرية',
     destination: '/home',
-    financePath: '/director-finance/alexandria',
+    financePath: '/president-finance',
   },
   president: {
     id: 'president',

@@ -10,34 +10,71 @@ import {
 import MainLayout from '../components/layout/MainLayout'
 import { getSession } from '../lib/authSession'
 import { getRoleProfile } from '../lib/authRoles'
-
-const SHORTCUTS = [
-  { id: 'urgent', label: 'Urgent', icon: AlertTriangle, path: '/home', urgent: true },
-  { id: 'mailbox', label: 'Mailbox', icon: Mail, path: '/mailbox' },
-  { id: 'statistics', label: 'Statistics', icon: BarChart2, path: '/statistics' },
-  { id: 'finance', label: 'Finance', icon: DollarSign, finance: true },
-  { id: 'meetings', label: 'Meetings', icon: Users, path: '/meetings' },
-  { id: 'news', label: 'News', icon: FileText, path: '/news' },
-]
+import { canAccessPath } from '../lib/roleAccess'
 
 export default function Home() {
   const navigate = useNavigate()
   const session = getSession()
   const profile = getRoleProfile(session?.role)
+  const role = session?.role
 
-  const handleShortcut = (item) => {
-    if (item.finance) {
-      navigate(profile?.financePath ?? '/president-finance')
-      return
-    }
-    navigate(item.path)
-  }
+  const statisticsPath =
+    role === 'president'
+      ? '/statistics/president'
+      : role === 'director'
+      ? '/statistics/director'
+      : '/statistics'
+
+  const financeTileLabel =
+    role === 'secretary'
+      ? 'التقرير المالي الدوري'
+      : role === 'director'
+      ? 'الملخص المالي المجمع'
+      : 'Finance'
+
+  const tiles = [
+    {
+      id: 'urgent',
+      label: 'Urgent',
+      icon: AlertTriangle,
+      path: '/urgent',
+    },
+    {
+      id: 'mailbox',
+      label: 'Mailbox',
+      icon: Mail,
+      path: '/mailbox',
+    },
+    {
+      id: 'statistics',
+      label: 'Statistics',
+      icon: BarChart2,
+      path: statisticsPath,
+    },
+    {
+      id: 'finance',
+      label: financeTileLabel,
+      icon: DollarSign,
+      path: profile?.financePath ?? '/president-finance',
+    },
+    {
+      id: 'meetings',
+      label: 'Meetings',
+      icon: Users,
+      path: '/meetings',
+    },
+    {
+      id: 'news',
+      label: 'News',
+      icon: FileText,
+      path: '/news',
+    },
+  ].filter((t) => canAccessPath(role, t.path))
 
   return (
     <MainLayout
       userName={profile?.userName}
       userSub={profile?.userSub}
-      activeNavId="urgent"
     >
       <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 mt-12">
         <div className="bg-card border border-border rounded-xl p-8 shadow-sm">
@@ -49,30 +86,24 @@ export default function Home() {
           </p>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-            {SHORTCUTS.map((item) => {
+            {tiles.map((item) => {
               const Icon = item.icon
               return (
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => handleShortcut(item)}
+                  onClick={() => navigate(item.path)}
                   className="flex flex-col items-center justify-center p-8 border border-border bg-card shadow-sm hover:shadow-md hover:border-primary rounded-xl transition-all active:scale-95 group"
                 >
                   <Icon
                     size={40}
                     strokeWidth={1.75}
-                    className={
-                      item.urgent
-                        ? 'mb-4 text-secondary'
-                        : 'mb-4 text-primary/70 group-hover:text-primary transition-colors'
-                    }
+                    className="mb-4 text-primary/70 group-hover:text-primary transition-colors"
                   />
                   <span
                     dir="ltr"
                     className={`font-bold text-lg ${
-                      item.urgent
-                        ? 'text-secondary'
-                        : 'text-foreground group-hover:text-primary transition-colors'
+                      'text-foreground group-hover:text-primary transition-colors'
                     }`}
                   >
                     {item.label}
