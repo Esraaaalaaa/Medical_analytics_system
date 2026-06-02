@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { DollarSign, TrendingUp, TrendingDown } from 'lucide-react'
 import MainLayout from '../components/layout/MainLayout'
 import PageHeader from '../components/ui/PageHeader'
@@ -120,7 +120,6 @@ const HOSPITAL_DATA = {
 
 export default function DirectorFinance() {
   const { hospitalId = 'alexandria' } = useParams()
-  const navigate = useNavigate()
   const hospital = HOSPITAL_DATA[hospitalId] ?? HOSPITAL_DATA.alexandria
   const [fromDate, setFromDate] = useState('01/01/2025')
   const [toDate,   setToDate]   = useState('31/10/2025')
@@ -135,22 +134,6 @@ export default function DirectorFinance() {
           title="الملخص المالي"
           subtitle={`${hospital.name} — تقرير المديونيات والمستحقات`}
           icon={DollarSign}
-          leftContent={
-            <div className="flex gap-2">
-              <button
-                onClick={() => navigate('/periodic-report')}
-                className="text-xs text-white bg-sky-600 hover:bg-sky-700 px-3 py-1.5 rounded-lg transition-all font-medium"
-              >
-                + إدخال بيانات
-              </button>
-              <button
-                onClick={() => navigate('/president-finance')}
-                className="text-xs text-slate-500 hover:text-sky-600 hover:bg-sky-50 px-3 py-1.5 rounded-lg border border-slate-200 transition-all font-medium"
-              >
-                ← العرض الموحد
-              </button>
-            </div>
-          }
         />
 
         <DateFilterBar

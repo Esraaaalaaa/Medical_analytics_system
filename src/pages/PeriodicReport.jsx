@@ -145,7 +145,7 @@ export default function PeriodicReport() {
 
               {/* 2×2 fields grid */}
               {/* In RTL: first DOM column = visual RIGHT */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <FormInputField label="نفقة دولة"   value={recv.stateExpense}    onChange={updateRecv('stateExpense')} />
                 <FormInputField label="تأمين صحي"   value={recv.healthInsurance} onChange={updateRecv('healthInsurance')} />
                 <FormInputField
@@ -224,7 +224,7 @@ export default function PeriodicReport() {
             </div>
           </div>
           <div className="p-5">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
                 { title: 'توقيع المدير',  sub: 'إدراج التوقيع الإلكتروني', type: 'pen' },
                 { title: 'ختم الجهة',    sub: 'إرفاق صورة الختم',         type: 'seal' },

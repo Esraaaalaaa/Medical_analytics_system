@@ -71,7 +71,7 @@ export default function PresidentFinance() {
         />
 
         {/* KPI Cards — in RTL: first DOM = visual RIGHT */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           {/* Visual RIGHT: net balance (dark) */}
           <StatCard
             value="+75,450,000"

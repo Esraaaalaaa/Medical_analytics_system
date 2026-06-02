@@ -109,21 +109,21 @@ export default function News() {
         </div>
 
         {/* مؤتمرات وفعاليات + تكريم وجوائز — before their articles */}
-        <div className="grid grid-cols-2 gap-4 mb-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
           {CATEGORIES.slice(2).map(cat => (
             <NewsCategoryCard key={cat.id} {...cat} />
           ))}
         </div>
 
         {/* Article cards 1 & 2 */}
-        <div className="grid grid-cols-2 gap-4 mb-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
           {visible.slice(0, 2).map(article => (
             <NewsArticleCard key={article.id} {...article} />
           ))}
         </div>
 
         {/* شراكات استراتيجية + تطوير وإحلال — before their articles */}
-        <div className="grid grid-cols-2 gap-4 mb-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
           {CATEGORIES.slice(0, 2).map(cat => (
             <NewsCategoryCard key={cat.id} {...cat} />
           ))}
@@ -131,7 +131,7 @@ export default function News() {
 
         {/* Article cards 3 & 4 */}
         {visible.length > 2 && (
-          <div className="grid grid-cols-2 gap-4 mb-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
             {visible.slice(2).map(article => (
               <NewsArticleCard key={article.id} {...article} />
             ))}

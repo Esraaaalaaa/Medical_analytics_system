@@ -71,6 +71,8 @@ export default function Sidebar({
   userName: userNameProp,
   userSub: userSubProp,
   activeNavId,
+  isOpen = false,
+  onClose,
 }) {
   const location = useLocation()
   const navigate = useNavigate()
@@ -123,7 +125,15 @@ export default function Sidebar({
       setExpandedId((prev) => (prev === item.id ? null : item.id))
       return
     }
-    if (item.path) navigate(item.path)
+    if (item.path) {
+      navigate(item.path)
+      onClose?.()
+    }
+  }
+
+  const handleSubNav = (path) => {
+    navigate(path)
+    onClose?.()
   }
 
   const handleLogout = () => {
@@ -132,7 +142,12 @@ export default function Sidebar({
   }
 
   return (
-    <aside className="hidden md:flex flex-col w-64 bg-primary text-primary-foreground border-l border-border shrink-0 h-full">
+    <aside className={`
+      fixed md:static inset-y-0 right-0 z-40 md:z-auto 
+      flex flex-col w-64 bg-primary text-primary-foreground border-l border-border shrink-0 h-full
+      transition-transform duration-300 ease-in-out
+      ${isOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
+    `}>
       <div className="p-4 border-b border-primary-foreground/20 flex flex-col items-center justify-center gap-2">
         <div className="flex items-center gap-2">
           <Shield className="text-secondary shrink-0" size={24} strokeWidth={1.75} />
@@ -196,7 +211,7 @@ export default function Sidebar({
                         <li key={sub.id}>
                           <button
                             type="button"
-                            onClick={() => navigate(sub.path)}
+                            onClick={() => handleSubNav(sub.path)}
                             className={`w-full flex items-center gap-2 px-3 py-2 rounded-sm text-xs transition-colors ${
                               subActive
                                 ? 'bg-primary-foreground/15 text-primary-foreground font-bold'
@@ -222,7 +237,7 @@ export default function Sidebar({
                         <li key={sub.id}>
                           <button
                             type="button"
-                            onClick={() => navigate(sub.path)}
+                            onClick={() => handleSubNav(sub.path)}
                             className="w-full flex items-center gap-2 px-3 py-2 rounded-sm text-xs bg-primary-foreground/15 font-bold"
                           >
                             <SubIcon size={14} strokeWidth={2} />

@@ -1,12 +1,10 @@
+import { useState } from 'react'
 import { Shield, Menu } from 'lucide-react'
 import Sidebar from './Sidebar'
 
-export default function MainLayout({
-  children,
-  userName,
-  userSub,
-  activeNavId,
-}) {
+export default function MainLayout({ children, userName, userSub, activeNavId }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
   return (
     <div
       dir="rtl"
@@ -16,7 +14,17 @@ export default function MainLayout({
         userName={userName}
         userSub={userSub}
         activeNavId={activeNavId}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
+
+      {/* Mobile backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
       <main className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
         <header className="md:hidden bg-primary text-primary-foreground p-4 flex items-center justify-between shrink-0">
@@ -28,6 +36,7 @@ export default function MainLayout({
             type="button"
             className="p-1"
             aria-label="القائمة"
+            onClick={() => setSidebarOpen(true)}
           >
             <Menu size={24} strokeWidth={1.75} />
           </button>
