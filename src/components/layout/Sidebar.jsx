@@ -9,7 +9,16 @@ import {
 const NAV_ITEMS = [
   { id: 'urgent',     label: 'Urgent',     icon: AlertTriangle, urgent: true },
   { id: 'mailbox',    label: 'Mailbox',    icon: Mail,          path: '/mailbox', badge: 3 },
-  { id: 'statistics', label: 'Statistics', icon: BarChart2,     path: '/statistics' },
+  {
+    id: 'statistics',
+    label: 'Statistics',
+    icon: BarChart2,
+    subItems: [
+      { id: 'secretary-stats', label: 'عرض الأمين العام', path: '/statistics',           icon: ClipboardList },
+      { id: 'president-stats', label: 'عرض الرئيس',      path: '/statistics/president', icon: LayoutGrid },
+      { id: 'director-stats',  label: 'عرض المدير',      path: '/statistics/director',  icon: Building2 },
+    ],
+  },
   {
     id: 'finance',
     label: 'Finance',

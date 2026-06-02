@@ -7,6 +7,8 @@ import News from './pages/News'
 import Meetings from './pages/Meetings'
 import Mailbox from './pages/Mailbox'
 import Statistics from './pages/Statistics'
+import PresidentStatistics from './pages/PresidentStatistics'
+import DirectorStatistics from './pages/DirectorStatistics'
 
 export default function App() {
   return (
@@ -18,6 +20,8 @@ export default function App() {
         <Route path="/meetings" element={<Meetings />} />
         <Route path="/mailbox" element={<Mailbox />} />
         <Route path="/statistics" element={<Statistics />} />
+        <Route path="/statistics/president" element={<PresidentStatistics />} />
+        <Route path="/statistics/director" element={<DirectorStatistics />} />
         <Route path="/president-finance" element={<PresidentFinance />} />
         <Route path="/director-finance" element={<DirectorFinance />} />
         <Route path="/director-finance/:hospitalId" element={<DirectorFinance />} />
