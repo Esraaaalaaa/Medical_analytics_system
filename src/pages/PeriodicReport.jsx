@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Clock, Building2, CheckCircle2, Loader2, TrendingUp, TrendingDown, PenLine } from 'lucide-react'
+import { Clock, Building2, CheckCircle2, Loader2, TrendingUp, TrendingDown, PenLine, Award, Printer } from 'lucide-react'
 import MainLayout from '../components/layout/MainLayout'
 import PageHeader from '../components/ui/PageHeader'
 import DateRangePicker from '../components/ui/DateRangePicker'
@@ -216,7 +216,7 @@ export default function PeriodicReport() {
         </div>
 
         {/* Signature section */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-5">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-end gap-2.5">
             <h3 className="text-sm font-bold text-slate-700">الاعتمادات والتوقيعات الرسمية</h3>
             <div className="w-8 h-8 flex items-center justify-center bg-slate-100 rounded-lg">
@@ -224,12 +224,11 @@ export default function PeriodicReport() {
             </div>
           </div>
           <div className="p-5">
-            {/* Three signature boxes — in RTL: first DOM = visual RIGHT */}
             <div className="grid grid-cols-3 gap-4">
               {[
-                { title: 'مدير المستشفى',   sub: 'التوقيع والختم' },
-                { title: 'السكرتير الطبي',  sub: 'التوقيع' },
-                { title: 'رئيس الحسابات',   sub: 'الاعتماد والتوقيع' },
+                { title: 'توقيع المدير',  sub: 'إدراج التوقيع الإلكتروني', type: 'pen' },
+                { title: 'ختم الجهة',    sub: 'إرفاق صورة الختم',         type: 'seal' },
+                { title: 'توقيع العميد', sub: 'إدراج التوقيع الإلكتروني', type: 'pen' },
               ].map((sig, i) => (
                 <div
                   key={i}
@@ -239,13 +238,28 @@ export default function PeriodicReport() {
                     <p className="text-sm font-semibold text-slate-700">{sig.title}</p>
                     <p className="text-xs text-slate-400 mt-0.5">{sig.sub}</p>
                   </div>
-                  <div className="w-8 h-8 rounded-full border-2 border-dashed border-slate-200 group-hover:border-sky-400 transition-colors flex items-center justify-center">
-                    <PenLine className="w-3.5 h-3.5 text-slate-300 group-hover:text-sky-400 transition-colors" />
+                  <div className="w-10 h-10 rounded-full border-2 border-dashed border-slate-200 group-hover:border-sky-400 transition-colors flex items-center justify-center">
+                    {sig.type === 'seal'
+                      ? <Award className="w-5 h-5 text-slate-300 group-hover:text-sky-400 transition-colors" />
+                      : <PenLine className="w-4 h-4 text-slate-300 group-hover:text-sky-400 transition-colors" />
+                    }
                   </div>
                 </div>
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex items-center gap-3 justify-start">
+          <button className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors shadow-sm">
+            <CheckCircle2 className="w-4 h-4" />
+            <span>اعتماد وحفظ التقرير</span>
+          </button>
+          <button className="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold px-5 py-2.5 rounded-xl border border-slate-200 transition-colors shadow-sm">
+            <Printer className="w-4 h-4" />
+            <span>معاينة وطباعة</span>
+          </button>
         </div>
       </div>
     </MainLayout>
