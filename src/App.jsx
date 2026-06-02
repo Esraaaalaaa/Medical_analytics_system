@@ -6,6 +6,11 @@ import DirectorFinance from './pages/DirectorFinance'
 import PresidentFinance from './pages/PresidentFinance'
 import PeriodicReport from './pages/PeriodicReport'
 import ProtectedRoute from './components/auth/ProtectedRoute'
+import UrgentCirculars from './pages/UrgentCirculars'
+import News from './pages/News'
+import Meetings from './pages/Meetings'
+import Mailbox from './pages/Mailbox'
+import Statistics from './pages/Statistics'
 
 export default function App() {
   return (
@@ -51,6 +56,46 @@ export default function App() {
           element={
             <ProtectedRoute>
               <PeriodicReport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/urgent-circulars"
+          element={
+            <ProtectedRoute>
+              <UrgentCirculars />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/news"
+          element={
+            <ProtectedRoute>
+              <News />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/meetings"
+          element={
+            <ProtectedRoute>
+              <Meetings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/mailbox"
+          element={
+            <ProtectedRoute>
+              <Mailbox />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/statistics"
+          element={
+            <ProtectedRoute>
+              <Statistics />
             </ProtectedRoute>
           }
         />

@@ -60,7 +60,7 @@ export default function DateFilterBar({
       </button>
 
       {/* Visual RIGHT — date range (RTL: first DOM = rightmost) */}
-      <div className="flex items-center gap-2">
+      <div  dir="rtl" className="flex items-center gap-2">
         {/* من تاريخ — rightmost in RTL */}
         <DatePill label="من" date={fromDate} onChange={onFromChange ?? (() => {})} />
 
