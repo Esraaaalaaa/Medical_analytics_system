@@ -1,235 +1,259 @@
 import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
-  AlertTriangle, Mail, BarChart2, DollarSign,
-  Users, FileText, User, Settings, LogOut,
-  ChevronDown, LayoutGrid, Building2, ClipboardList,
+  AlertTriangle,
+  Mail,
+  BarChart2,
+  DollarSign,
+  Users,
+  FileText,
+  User,
+  Settings,
+  LogOut,
+  Shield,
+  ChevronDown,
+  LayoutGrid,
+  Building2,
+  ClipboardList,
 } from 'lucide-react'
+import { getSession, clearSession } from '../../lib/authSession'
+import { getRoleProfile } from '../../lib/authRoles'
 
 const NAV_ITEMS = [
   { id: 'urgent',     label: 'Urgent',     icon: AlertTriangle, urgent: true },
   { id: 'mailbox',    label: 'Mailbox',    icon: Mail,          path: '/mailbox', badge: 3 },
-  { id: 'statistics', label: 'Statistics', icon: BarChart2,     path: '/statistics' },
+  {
+    id: 'statistics',
+    label: 'Statistics',
+    icon: BarChart2,
+    subItems: [
+      { id: 'secretary-stats', label: 'عرض الأمين العام', path: '/statistics',           icon: ClipboardList },
+      { id: 'president-stats', label: 'عرض الرئيس',      path: '/statistics/president', icon: LayoutGrid },
+      { id: 'director-stats',  label: 'عرض المدير',      path: '/statistics/director',  icon: Building2 },
+    ],
+  },
   {
     id: 'finance',
     label: 'Finance',
     icon: DollarSign,
     subItems: [
-      { id: 'president-finance', label: 'الملخص المجمع',  path: '/president-finance',           icon: LayoutGrid },
-      { id: 'director-finance',  label: 'الملخص المالي',  path: '/director-finance/alexandria',  icon: Building2 },
-      { id: 'periodic-report',   label: 'التقرير الدوري', path: '/periodic-report',              icon: ClipboardList },
+      { id: 'president-finance', label: 'الملخص المجمع', path: '/president-finance', icon: LayoutGrid },
+      { id: 'director-finance', label: 'الملخص المالي', path: '/director-finance/alexandria', icon: Building2 },
+      { id: 'periodic-report', label: 'التقرير الدوري', path: '/periodic-report', icon: ClipboardList },
     ],
   },
-  { id: 'meetings', label: 'Meetings', icon: Users,    path: '/meetings' },
-  { id: 'news',     label: 'News',     icon: FileText, path: '/news' },
+  { id: 'meetings', label: 'Meetings', icon: Users, path: '/meetings' },
+  { id: 'news', label: 'News', icon: FileText, path: '/news' },
 ]
 
 const matchesSub = (sub, pathname) =>
   pathname === sub.path ||
   pathname.startsWith('/' + sub.path.split('/')[1] + '/')
 
+function resolveActiveId(pathname, activeNavId) {
+  if (activeNavId) return activeNavId
+  if (pathname === '/home' || pathname === '/urgent') return 'urgent'
+  for (const item of NAV_ITEMS) {
+    if (item.path && (pathname === item.path || pathname.startsWith(item.path + '/'))) {
+      return item.id
+    }
+    if (item.subItems?.some((s) => matchesSub(s, pathname))) return item.id
+  }
+  return null
+}
+
 export default function Sidebar({
-  userName = 'مدير مستشفى',
-  userSub  = 'مستشفيات جامعة الإسكندرية',
+  userName: userNameProp,
+  userSub: userSubProp,
+  activeNavId,
 }) {
   const location = useLocation()
   const navigate = useNavigate()
+  const session = getSession()
+  const profile = getRoleProfile(session?.role)
+
+  const userName = userNameProp ?? profile?.userName ?? 'مدير مستشفى'
+  const userSub = userSubProp ?? profile?.userSub ?? 'مستشفيات جامعة الإسكندرية'
+
+  const activeId = resolveActiveId(location.pathname, activeNavId)
 
   const [expandedId, setExpandedId] = useState(() => {
     for (const item of NAV_ITEMS) {
-      if (item.subItems?.some(s => matchesSub(s, location.pathname))) return item.id
+      if (item.subItems?.some((s) => matchesSub(s, location.pathname))) return item.id
     }
     return null
   })
 
   useEffect(() => {
     for (const item of NAV_ITEMS) {
-      if (item.subItems?.some(s => matchesSub(s, location.pathname))) {
+      if (item.subItems?.some((s) => matchesSub(s, location.pathname))) {
         setExpandedId(item.id)
         return
       }
     }
   }, [location.pathname])
 
-  const isDirectActive = (path) =>
-    path && (location.pathname === path || location.pathname.startsWith(path + '/'))
-
-  const hasActiveChild = (item) =>
-    item.subItems?.some(s => matchesSub(s, location.pathname))
-
-  const toggle = (item) => {
-    if (item.subItems) {
-      setExpandedId(prev => (prev === item.id ? null : item.id))
-    } else if (item.path) {
-      navigate(item.path)
+  const navItemClass = (item) => {
+    const isActive = activeId === item.id
+    if (item.urgent && isActive) {
+      return 'border-secondary text-secondary bg-secondary/10 font-bold'
     }
+    if (isActive) {
+      return 'border-primary-foreground/30 bg-primary-foreground/10 font-bold'
+    }
+    return 'border-transparent hover:bg-primary-foreground/10 hover:border-primary-foreground/20'
+  }
+
+  const handleNavClick = (item) => {
+    if (item.subItems) {
+      setExpandedId((prev) => (prev === item.id ? null : item.id))
+      return
+    }
+    if (item.path) navigate(item.path)
+  }
+
+  const handleLogout = () => {
+    clearSession()
+    navigate('/login', { replace: true })
   }
 
   return (
-    /* ── RTL wrapper fills full screen height ── */
-       <aside
-      dir="ltr"
-      className="w-80 bg-[#0d1526] flex flex-col h-screen sticky top-0 shrink-0 border-l border-white/10"
-    >
-
-      {/* ── Logo ── */}
-      <div className="px-5 pt-5 pb-4 border-b border-white/10">
-        <div className="flex items-center justify-end gap-3">
-          <div>
-            <h1 className="text-white font-bold text-[15px] tracking-widest leading-none text-right">
-              UH-CONNECT
-            </h1>
-            <p className="text-white/35 text-[11px] mt-1.5 leading-snug text-right">
-              المجلس الأعلى للمستشفيات الجامعية
-            </p>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center shrink-0">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="#ef4444">
-              <path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z" />
-            </svg>
-          </div>
+    <aside className="hidden md:flex flex-col w-64 bg-primary text-primary-foreground border-l border-border shrink-0 h-full">
+      <div className="p-4 border-b border-primary-foreground/20 flex flex-col items-center justify-center gap-2">
+        <div className="flex items-center gap-2">
+          <Shield className="text-secondary shrink-0" size={24} strokeWidth={1.75} />
+          <div className="text-xl font-bold font-headings">UH-CONNECT</div>
+        </div>
+        <div className="text-xs text-primary-foreground/70 text-center">
+          المجلس الأعلى للمستشفيات الجامعية
         </div>
       </div>
 
-      {/* ── User ── */}
-      <div className="px-4 py-4 border-b border-white/10 flex items-center justify-end gap-3">
-        <div className="text-right min-w-0">
-          <p className="text-white text-[14px] font-semibold truncate">{userName}</p>
-          <p className="text-white/40 text-[12px] truncate mt-0.5">{userSub}</p>
+      <div className="p-4 border-b border-primary-foreground/20 flex items-center gap-3">
+        <div className="size-10 bg-primary-foreground/10 rounded-sm flex items-center justify-center border border-primary-foreground/20 shrink-0">
+          <User size={20} strokeWidth={1.75} />
         </div>
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500/30 to-purple-500/30
-          flex items-center justify-center shrink-0 border border-white/10">
-          <User className="w-5 h-5 text-white/60" />
+        <div className="flex flex-col min-w-0">
+          <span className="text-sm font-bold truncate">{userName}</span>
+          <span className="text-xs text-primary-foreground/70 truncate">{userSub}</span>
         </div>
       </div>
 
-      {/* ── Nav ── */}
-      <nav className="flex-1 overflow-y-auto py-3">
-        {NAV_ITEMS.map((item) => {
-          const Icon        = item.icon
-          const active      = isDirectActive(item.path)
-          const childActive = hasActiveChild(item)
-          const expanded    = expandedId === item.id
-
-          /* ─ Urgent special button ─ */
-          if (item.urgent) {
-            const urgentActive = location.pathname === '/urgent'
-            return (
-              <div dir="rtl" key={item.id} className="px-3 mb-1">
-                <button
-                  onClick={() => navigate('/urgent')}
-                  className={`w-full flex items-center justify-end gap-3 px-4 py-3 text-red-400 rounded-lg
-                    border transition-all duration-150 ${
-                    urgentActive
-                      ? 'border-red-500/60 bg-red-500/20'
-                      : 'border-red-500/40 bg-red-500/10 hover:bg-red-500/20'
-                  }`}
-                >
-                  <span className="text-[13.5px] font-semibold">Urgent</span>
-                  <Icon className="w-[18px] h-[18px]" />
-                  <span className="mr-auto">
-                    <AlertTriangle className="w-3.5 h-3.5 text-red-400 opacity-70" />
-                  </span>
-                </button>
-              </div>
+      <nav className="flex-1 overflow-y-auto py-4 flex flex-col">
+        <ul className="space-y-1 px-2 flex-1">
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon
+            const isExpanded = expandedId === item.id
+            const hasActiveChild = item.subItems?.some((s) =>
+              matchesSub(s, location.pathname),
             )
-          }
 
-          return (
-            <div key={item.id}>
-              {/* ─ Parent button ─ */}
-              <button
-                onClick={() => toggle(item)}
-                className={`w-full flex items-center justify-end gap-3 px-5 py-3 relative
-                  transition-all duration-150 ${
-                    active || childActive
-                      ? 'bg-white/10 text-white'
-                      : 'text-white/55 hover:bg-white/5 hover:text-white/90'
-                  }`}
-              >
-                {/* Active indicator bar — right side for RTL */}
-                {active && !item.subItems && (
-                  <span className="absolute right-0 top-1.5 bottom-1.5 w-[3px] bg-blue-400 rounded-l-full" />
-                )}
-
-                {/* Chevron */}
-                {item.subItems && (
-                  <ChevronDown
-                    className={`w-4 h-4 shrink-0 transition-transform duration-200 ${
-                      expanded ? 'rotate-180' : ''
-                    } ${childActive ? 'text-sky-400' : ''}`}
-                  />
-                )}
-
-                <span className="text-[13.5px] font-medium">{item.label}</span>
-
-                <div className="relative">
-                  <Icon className={`w-[18px] h-[18px] ${childActive ? 'text-sky-400' : ''}`} />
-                  {item.badge && (
-                    <span className="absolute -top-2.5 -left-2.5 bg-red-500 text-white rounded-full w-4 h-4
-                      flex items-center justify-center text-[9px] font-bold leading-none">
+            return (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => handleNavClick(item)}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-sm text-sm border transition-colors ${navItemClass(item)}`}
+                >
+                  <Icon size={18} strokeWidth={2} className="shrink-0" />
+                  <span className="flex-1 text-right">{item.label}</span>
+                  {item.badge != null && (
+                    <span className="bg-secondary text-secondary-foreground text-xs px-1.5 py-0.5 rounded-sm">
                       {item.badge}
                     </span>
                   )}
-                </div>
-              </button>
+                  {item.subItems && (
+                    <ChevronDown
+                      size={16}
+                      className={`shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                    />
+                  )}
+                </button>
 
-              {/* ─ Submenu ─ */}
-              {item.subItems && (
-                <div
-                  className={`overflow-hidden transition-[max-height] duration-250 ease-in-out ${
-                    expanded ? 'max-h-48' : 'max-h-0'
-                  }`}
-                >
-                  {/* Connector line — right side for RTL */}
-                  <div className="border-r-2 border-white/10 mr-[1.35rem] py-0.5">
+                {item.subItems && isExpanded && (
+                  <ul className="mt-1 mr-2 border-r-2 border-primary-foreground/20 pr-1 space-y-0.5">
                     {item.subItems.map((sub) => {
-                      const SubIcon   = sub.icon
+                      const SubIcon = sub.icon
                       const subActive = matchesSub(sub, location.pathname)
-
                       return (
-                        <button
-                          key={sub.id}
-                          onClick={() => navigate(sub.path)}
-                          className={`w-full flex items-center justify-end gap-2.5 pr-4 pl-3 py-2.5
-                            transition-all duration-150 rounded-r-lg ${
+                        <li key={sub.id}>
+                          <button
+                            type="button"
+                            onClick={() => navigate(sub.path)}
+                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-sm text-xs transition-colors ${
                               subActive
-                                ? 'text-sky-300 bg-sky-500/15 font-semibold'
-                                : 'text-white/40 hover:text-white/80 hover:bg-white/5'
+                                ? 'bg-primary-foreground/15 text-primary-foreground font-bold'
+                                : 'text-primary-foreground/70 hover:bg-primary-foreground/10'
                             }`}
-                        >
-                          <span className="text-[12.5px] truncate">{sub.label}</span>
-                          <SubIcon className={`w-4 h-4 shrink-0 ${subActive ? 'text-sky-400' : ''}`} />
-                        </button>
+                          >
+                            <SubIcon size={14} strokeWidth={2} className="shrink-0" />
+                            <span className="flex-1 text-right">{sub.label}</span>
+                          </button>
+                        </li>
                       )
                     })}
-                  </div>
-                </div>
-              )}
-            </div>
-          )
-        })}
+                  </ul>
+                )}
+
+                {hasActiveChild && !isExpanded && item.subItems && (
+                  <ul className="mt-1 mr-2 border-r-2 border-primary-foreground/20 pr-1 space-y-0.5">
+                    {item.subItems.map((sub) => {
+                      const SubIcon = sub.icon
+                      const subActive = matchesSub(sub, location.pathname)
+                      if (!subActive) return null
+                      return (
+                        <li key={sub.id}>
+                          <button
+                            type="button"
+                            onClick={() => navigate(sub.path)}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-sm text-xs bg-primary-foreground/15 font-bold"
+                          >
+                            <SubIcon size={14} strokeWidth={2} />
+                            <span className="flex-1 text-right">{sub.label}</span>
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+
+        <div className="px-4 py-2 mt-auto border-t border-primary-foreground/20">
+          <ul className="space-y-1">
+            <li>
+              <button
+                type="button"
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-sm text-sm border border-transparent hover:bg-primary-foreground/10 hover:border-primary-foreground/20 transition-colors"
+              >
+                <User size={18} strokeWidth={2} />
+                <span className="flex-1 text-right">الملف الشخصي</span>
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-sm text-sm border border-transparent hover:bg-primary-foreground/10 hover:border-primary-foreground/20 transition-colors"
+              >
+                <Settings size={18} strokeWidth={2} />
+                <span className="flex-1 text-right">الإعدادات</span>
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-3 py-2 mt-2 rounded-sm text-sm font-bold text-red-400 border border-transparent hover:bg-red-500/10 hover:text-red-300 transition-colors"
+              >
+                <LogOut size={18} strokeWidth={2} />
+                <span className="flex-1 text-right">تسجيل الخروج</span>
+              </button>
+            </li>
+          </ul>
+        </div>
       </nav>
-
-      {/* ── Bottom ── */}
-      <div className="border-t border-white/10 py-2">
-        <button className="w-full flex items-center justify-end gap-3 px-5 py-3 text-white/50
-          hover:bg-white/5 hover:text-white/80 transition-all text-[13.5px]">
-          <span>الملف الشخصي</span>
-          <User className="w-[18px] h-[18px]" />
-        </button>
-        <button className="w-full flex items-center justify-end gap-3 px-5 py-3 text-white/50
-          hover:bg-white/5 hover:text-white/80 transition-all text-[13.5px]">
-          <span>الإعدادات</span>
-          <Settings className="w-[18px] h-[18px]" />
-        </button>
-        <button className="w-full flex items-center justify-end gap-3 px-5 py-3 text-red-400/80
-          hover:bg-red-500/10 hover:text-red-400 transition-all text-[13.5px]">
-          <span>تسجيل الخروج</span>
-          <LogOut className="w-[18px] h-[18px]" />
-        </button>
-      </div>
-
     </aside>
   )
 }
