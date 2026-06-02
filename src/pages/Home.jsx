@@ -29,7 +29,7 @@ export default function Home() {
     role === 'secretary'
       ? 'التقرير المالي الدوري'
       : role === 'director'
-      ? 'الملخص المالي المجمع'
+      ? 'الملخص المالي'
       : 'Finance'
 
   const tiles = [

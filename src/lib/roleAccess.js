@@ -16,7 +16,8 @@ export function canAccessPath(role, pathname) {
       pathname === '/meetings' ||
       pathname === '/mailbox' ||
       pathname === '/statistics/director' ||
-      pathname === '/president-finance'
+      pathname === '/director-finance/alexandria' ||
+      pathname.startsWith('/director-finance/')
     )
   }
 
