@@ -1,9 +1,16 @@
 import { useNavigate } from 'react-router-dom'
-import { User, Briefcase, Shield } from 'lucide-react'
+import { User, Briefcase, Shield, KeyRound } from 'lucide-react'
 import LoginBrandPanel from '../components/login/LoginBrandPanel'
 import LoginMobileHeader from '../components/login/LoginMobileHeader'
 
 const DEMO_ROLES = [
+  {
+    label: 'الدخول كمدير النظام',
+    icon: KeyRound,
+    role: 'admin',
+    className:
+      'w-full bg-red-600 text-white font-bold py-3.5 rounded-lg flex justify-center items-center gap-2 hover:bg-red-700 transition-colors',
+  },
   {
     label: 'الدخول كسكرتير طبي',
     icon: User,

@@ -8,7 +8,7 @@ export default function ProtectedRoute({ children, allowedRoles }) {
     return <Navigate to="/login" replace />
   }
 
-  if (Array.isArray(allowedRoles) && allowedRoles.length > 0) {
+  if (session.role !== 'admin' && Array.isArray(allowedRoles) && allowedRoles.length > 0) {
     if (!allowedRoles.includes(session.role)) {
       return <Navigate to="/home" replace />
     }

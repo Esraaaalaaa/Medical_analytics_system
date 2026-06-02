@@ -1,4 +1,12 @@
 export const ROLES = {
+  admin: {
+    id: 'admin',
+    label: 'مدير النظام',
+    userName: 'admin',
+    userSub: 'المجلس الأعلى للمستشفيات الجامعية',
+    destination: '/home',
+    financePath: '/president-finance',
+  },
   secretary: {
     id: 'secretary',
     label: 'سكرتير طبي',

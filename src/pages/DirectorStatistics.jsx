@@ -3,6 +3,31 @@ import MainLayout from '../components/layout/MainLayout'
 import PageHeader from '../components/ui/PageHeader'
 import DateFilterBar from '../components/ui/DateFilterBar'
 import { BarChart3, Droplet, AlertCircle, Bed, Activity, Heart, Users, TrendingUp, Radio, PieChart } from 'lucide-react'
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
+  LineChart, Line, Area, AreaChart
+} from 'recharts'
+
+const SERVICES_TREND_DATA = [
+  { month: 'يناير',  جراحة: 1100, طوارئ: 10200, عيادات: 44000 },
+  { month: 'فبراير', جراحة: 1250, طوارئ: 11500, عيادات: 47000 },
+  { month: 'مارس',   جراحة: 1400, طوارئ: 13000, عيادات: 52000 },
+  { month: 'أبريل',  جراحة: 1180, طوارئ: 12400, عيادات: 49000 },
+  { month: 'مايو',   جراحة: 1520, طوارئ: 14800, عيادات: 58000 },
+  { month: 'يونيو',  جراحة: 1350, طوارئ: 13200, عيادات: 54000 },
+  { month: 'يوليو',  جراحة: 1600, طوارئ: 15600, عيادات: 61000 },
+  { month: 'أغسطس', جراحة: 1480, طوارئ: 14200, عيادات: 57000 },
+  { month: 'سبتمبر', جراحة: 1700, طوارئ: 16800, عيادات: 65000 },
+]
+
+const PATIENT_DIST_DATA = [
+  { name: 'طوارئ',       value: 136318, color: '#ef4444' },
+  { name: 'عيادات',      value: 568339, color: '#10b981' },
+  { name: 'داخلي',       value: 104306, color: '#3b82f6' },
+  { name: 'عناية مركزة', value: 39607,  color: '#8b5cf6' },
+  { name: 'جراحة',       value: 13788,  color: '#06b6d4' },
+  { name: 'كيميائي',     value: 24558,  color: '#f97316' },
+]
 
 // Director dashboard cards
 const DIRECTOR_CARDS = [
@@ -147,75 +172,82 @@ export default function DirectorStatistics() {
           {/* Chart 1: Patient Distribution */}
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
-              <PieChart className="w-5 h-5 text-slate-400" />
-              <h3 className="font-bold text-slate-800 text-base">
-                توزيع حالات المرضى
-              </h3>
+              <BarChart3 className="w-5 h-5 text-slate-400" />
+              <h3 className="font-bold text-slate-800 text-base">توزيع حالات المرضى</h3>
             </div>
-            <div className="h-48 flex items-center justify-center">
-              {/* Bar chart visualization */}
-              <div className="w-full h-full flex items-end justify-around gap-4 px-8">
-                <div className="flex flex-col items-center gap-2 flex-1">
-                  <div className="w-full bg-red-200 rounded-t-lg" style={{ height: '65%' }}></div>
-                  <span className="text-xs text-slate-500">طوارئ</span>
-                </div>
-                <div className="flex flex-col items-center gap-2 flex-1">
-                  <div className="w-full bg-emerald-200 rounded-t-lg" style={{ height: '85%' }}></div>
-                  <span className="text-xs text-slate-500">عيادات</span>
-                </div>
-                <div className="flex flex-col items-center gap-2 flex-1">
-                  <div className="w-full bg-blue-200 rounded-t-lg" style={{ height: '50%' }}></div>
-                  <span className="text-xs text-slate-500">داخلي</span>
-                </div>
-              </div>
-            </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={PATIENT_DIST_DATA} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 11, fill: '#64748b' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tickFormatter={v => `${(v / 1000).toFixed(0)}k`}
+                  tick={{ fontSize: 11, fill: '#94a3b8' }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={36}
+                />
+                <Tooltip
+                  formatter={(value) => [value.toLocaleString(), 'حالة']}
+                  contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 12 }}
+                  cursor={{ fill: '#f8fafc' }}
+                />
+                <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={52}>
+                  {PATIENT_DIST_DATA.map((entry, i) => (
+                    <Cell key={i} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
 
           {/* Chart 2: Service Trends */}
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-2">
               <TrendingUp className="w-5 h-5 text-slate-400" />
-              <h3 className="font-bold text-slate-800 text-base">
-                مؤشر الخدمات الطبية
-              </h3>
+              <h3 className="font-bold text-slate-800 text-base">مؤشر الخدمات الطبية</h3>
             </div>
-            <div className="h-48 flex items-center justify-center relative">
-              {/* Simple line chart visualization */}
-              <svg className="w-full h-full" viewBox="0 0 300 150" preserveAspectRatio="none">
+            {/* Legend */}
+            <div className="flex items-center justify-end gap-4 mb-3">
+              {[{ label: 'عيادات', color: '#10b981' }, { label: 'طوارئ', color: '#ef4444' }, { label: 'جراحة', color: '#3b82f6' }].map(l => (
+                <div key={l.label} className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-full" style={{ background: l.color }} />
+                  <span className="text-xs text-slate-500">{l.label}</span>
+                </div>
+              ))}
+            </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <AreaChart data={SERVICES_TREND_DATA} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                 <defs>
-                  <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+                  <linearGradient id="gradEyada" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="gradTawari" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="gradJiraha" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                {/* Area under line */}
-                <path
-                  d="M0,120 L50,100 L100,80 L150,90 L200,60 L250,70 L300,40 L300,150 L0,150 Z"
-                  fill="url(#lineGradient)"
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                <YAxis tickFormatter={v => `${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={36} />
+                <Tooltip
+                  formatter={(value, name) => [value.toLocaleString(), name]}
+                  contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 12 }}
                 />
-                {/* Line */}
-                <polyline
-                  points="0,120 50,100 100,80 150,90 200,60 250,70 300,40"
-                  fill="none"
-                  stroke="#3b82f6"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              {/* X-axis labels */}
-              <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-slate-400 px-2">
-                <span>سبتمبر</span>
-                <span>أغسطس</span>
-                <span>يوليو</span>
-                <span>يونيو</span>
-                <span>مايو</span>
-                <span>أبريل</span>
-                <span>مارس</span>
-                <span>فبراير</span>
-                <span>يناير</span>
-              </div>
-            </div>
+                <Area type="monotone" dataKey="عيادات" stroke="#10b981" strokeWidth={2} fill="url(#gradEyada)" dot={false} />
+                <Area type="monotone" dataKey="طوارئ"  stroke="#ef4444" strokeWidth={2} fill="url(#gradTawari)" dot={false} />
+                <Area type="monotone" dataKey="جراحة"  stroke="#3b82f6" strokeWidth={2} fill="url(#gradJiraha)" dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>

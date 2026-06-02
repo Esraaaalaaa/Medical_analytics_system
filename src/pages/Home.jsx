@@ -76,16 +76,16 @@ export default function Home() {
       userName={profile?.userName}
       userSub={profile?.userSub}
     >
-      <div className="h-full flex flex-col p-4 md:p-8">
-        <div className="bg-card border border-border rounded-xl shadow-sm flex flex-col flex-1 p-6 md:p-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-primary mb-2">
+      <div className="min-h-full p-4 md:p-8 min-w-5xl mx-16 my-32 ">
+        <div className="bg-card border border-border rounded-xl min-h-full p-8 shadow-sm">
+          <h1 className="text-3xl font-bold text-primary mb-2">
             مرحباً بك في نظام التواصل الموحد
           </h1>
-          <p className="text-muted-foreground mb-8 text-base md:text-lg">
+          <p className="text-muted-foreground mb-8 text-lg">
             منصة التقارير والتواصل للمستشفيات الجامعية المصرية.
           </p>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 flex-1">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {tiles.map((item) => {
               const Icon = item.icon
               return (
@@ -93,7 +93,7 @@ export default function Home() {
                   key={item.id}
                   type="button"
                   onClick={() => navigate(item.path)}
-                  className="flex flex-col items-center justify-center border border-border bg-card shadow-sm hover:shadow-md hover:border-primary rounded-xl transition-all active:scale-95 group"
+                  className="flex flex-col items-center justify-center p-8 border border-border bg-card shadow-sm hover:shadow-md hover:border-primary rounded-xl transition-all active:scale-95 group"
                 >
                   <Icon
                     size={40}
@@ -102,7 +102,9 @@ export default function Home() {
                   />
                   <span
                     dir="ltr"
-                    className="font-bold text-lg text-foreground group-hover:text-primary transition-colors"
+                    className={`font-bold text-lg ${
+                      'text-foreground group-hover:text-primary transition-colors'
+                    }`}
                   >
                     {item.label}
                   </span>

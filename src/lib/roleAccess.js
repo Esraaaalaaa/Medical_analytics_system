@@ -8,6 +8,9 @@ export function canAccessPath(role, pathname) {
   // Always allow login pages
   if (LOGIN_PATHS.includes(pathname)) return true
 
+  // Admin can access everything
+  if (role === 'admin') return true
+
   if (role === 'director') {
     return (
       pathname === '/home' ||
