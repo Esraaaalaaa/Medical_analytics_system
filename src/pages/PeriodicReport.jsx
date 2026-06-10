@@ -1,267 +1,431 @@
-import { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Clock, Building2, CheckCircle2, Loader2, TrendingUp, TrendingDown, PenLine, Award, Printer } from 'lucide-react'
+﻿import { useEffect, useMemo, useState } from 'react'
+import {
+  Clock,
+  Building2,
+  CheckCircle2,
+  Loader2,
+  TrendingUp,
+  TrendingDown,
+  PenLine,
+  Award,
+  Printer,
+  FileCheck2,
+} from 'lucide-react'
 import MainLayout from '../components/layout/MainLayout'
 import PageHeader from '../components/ui/PageHeader'
 import DateRangePicker from '../components/ui/DateRangePicker'
 import FormInputField from '../components/ui/FormInputField'
+import SignatureUploadModal from '../components/ui/SignatureUploadModal'
+import { getSession } from '../lib/authSession'
+import { getRoleProfile } from '../lib/authRoles'
 
 const fmt = (n) =>
   Number.isFinite(n) && n !== 0
-    ? n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    ? n.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
     : '0.00'
 
 const sum = (obj, keys) =>
-  keys.reduce((acc, k) => acc + (parseFloat(obj[k]) || 0), 0)
+  keys.reduce((acc, key) => acc + (parseFloat(obj[key]) || 0), 0)
+
+const SIGNATURE_FIELDS = [
+  {
+    id: 'director',
+    title: 'توقيع المدير',
+    sub: 'إرفاق صورة التوقيع',
+    type: 'pen',
+  },
+  {
+    id: 'seal',
+    title: 'ختم الجهة',
+    sub: 'إرفاق صورة الختم',
+    type: 'seal',
+  },
+  {
+    id: 'dean',
+    title: 'توقيع العميد',
+    sub: 'إرفاق صورة التوقيع',
+    type: 'pen',
+  },
+]
 
 export default function PeriodicReport() {
-  const navigate = useNavigate()
+  const session = getSession()
+  const profile = getRoleProfile(session?.role)
 
   const [recv, setRecv] = useState({
-    from: '2025-01-01',
-    to:   '2025-10-31',
-    stateExpense:            '',
-    healthInsurance:         '',
-    comprehensiveInsurance:  '',
-    waitingList:             '',
+    from: '2026-06-01',
+    to: '2026-06-30',
+    stateExpense: '',
+    healthInsurance: '',
+    comprehensiveInsurance: '',
+    waitingList: '',
   })
 
   const [debt, setDebt] = useState({
-    from: '2025-01-01',
-    to:   '2025-10-31',
-    free:     '',
+    from: '2026-06-01',
+    to: '2026-06-30',
+    free: '',
     economic: '',
   })
 
-  const [saveStatus, setSaveStatus] = useState('saved') // 'saving' | 'saved'
+  const [signatures, setSignatures] = useState({})
+  const [activeSignature, setActiveSignature] = useState(null)
+  const [saveStatus, setSaveStatus] = useState('saved')
   const [lastSaved, setLastSaved] = useState(new Date())
+  const [approved, setApproved] = useState(false)
 
-  // Auto-save simulation
   useEffect(() => {
     setSaveStatus('saving')
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       setSaveStatus('saved')
       setLastSaved(new Date())
-    }, 900)
-    return () => clearTimeout(t)
-  }, [recv, debt])
+    }, 800)
+
+    return () => clearTimeout(timer)
+  }, [recv, debt, signatures])
 
   const recvTotal = useMemo(
-    () => sum(recv, ['stateExpense', 'healthInsurance', 'comprehensiveInsurance', 'waitingList']),
-    [recv]
-  )
-  const debtTotal = useMemo(
-    () => sum(debt, ['free', 'economic']),
-    [debt]
+    () =>
+      sum(recv, [
+        'stateExpense',
+        'healthInsurance',
+        'comprehensiveInsurance',
+        'waitingList',
+      ]),
+    [recv],
   )
 
-  const updateRecv = (key) => (val) => setRecv(p => ({ ...p, [key]: val }))
-  const updateDebt = (key) => (val) => setDebt(p => ({ ...p, [key]: val }))
+  const debtTotal = useMemo(() => sum(debt, ['free', 'economic']), [debt])
 
-  const formatTime = (d) =>
-    d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+  const netBalance = recvTotal - debtTotal
+
+  const completedSignatures = SIGNATURE_FIELDS.filter(
+    (field) => signatures[field.id],
+  ).length
+
+  const selectedSignatureField = SIGNATURE_FIELDS.find(
+    (field) => field.id === activeSignature,
+  )
+
+  const updateRecv = (key) => (value) => {
+    setApproved(false)
+    setRecv((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const updateDebt = (key) => (value) => {
+    setApproved(false)
+    setDebt((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const formatTime = (date) =>
+    date.toLocaleTimeString('ar-EG', {
+      hour: '2-digit',
+      minute: '2-digit',
+    })
 
   return (
-    <MainLayout
-      userName="سكرتير طبي"
-      userSub="مستشفيات جامعة القاهرة (القصر العيني)"
-    >
-      <div dir="ltr" className="p-6 max-w-8xl mx-auto">
+    <MainLayout userName={profile?.userName} userSub={profile?.userSub}>
+      <div dir="rtl" className="px-4 py-6 md:px-8">
+        <div className="mx-auto max-w-7xl">
+          <PageHeader
+            title="التقرير المالي الدوري"
+            subtitle="إدخال ومراجعة المستحقات والمديونيات قبل الاعتماد"
+            icon={Clock}
+            leftContent={
+              <div className="flex flex-wrap items-center gap-2">
+                <div
+                  className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold transition-all ${
+                    saveStatus === 'saving'
+                      ? 'border-amber-200 bg-amber-50 text-amber-600'
+                      : 'border-emerald-200 bg-emerald-50 text-emerald-600'
+                  }`}
+                >
+                  <span>{saveStatus === 'saving' ? 'جاري الحفظ...' : 'محفوظ'}</span>
+                  {saveStatus === 'saving' ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  )}
+                </div>
 
-        {/* Page Header */}
-        <PageHeader
-          title="التقرير المالي الدوري"
-          icon={Clock}
-          leftContent={
-            <div className="flex items-center gap-2">
-              {/* Auto-save indicator */}
-              <div className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-all ${
-                saveStatus === 'saving'
-                  ? 'text-amber-600 bg-amber-50 border-amber-200'
-                  : 'text-emerald-600 bg-emerald-50 border-emerald-200'
-              }`}>
-                {saveStatus === 'saving'
-                  ? <Loader2 className="w-3 h-3 animate-spin" />
-                  : <CheckCircle2 className="w-3 h-3" />}
-                <span className="font-medium">
-                  {saveStatus === 'saving' ? 'جاري الحفظ...' : 'محفوظ'}
-                </span>
+                <button
+                  type="button"
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-500 transition-all hover:bg-slate-50"
+                >
+                  معاينة التقرير
+                </button>
               </div>
-              <button
-                onClick={() => navigate('/president-finance')}
-                className="text-xs text-slate-500 hover:text-sky-600 hover:bg-sky-50 px-3 py-1.5 rounded-lg border border-slate-200 transition-all font-medium"
-              >
-                ← العرض الموحد
-              </button>
-            </div>
-          }
-        />
+            }
+          />
 
-        {/* Hospital badge + description */}
-        <div className="bg-white rounded-xl border border-slate-200 px-5 py-3.5 mb-5 shadow-sm flex items-center justify-between">
-          <div className="text-xs text-slate-500 flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5" />
-            <span>
-              آخر تحديث: اليوم، {formatTime(lastSaved)} صباحاً
-            </span>
+          <div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 text-right shadow-sm">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-50 text-sky-600">
+                <Building2 className="h-5 w-5" />
+              </div>
+              <p className="text-xs font-bold text-slate-400">الجهة</p>
+              <p className="mt-1 text-base font-black text-slate-800">
+                مستشفيات جامعة القاهرة
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 text-right shadow-sm">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                <Clock className="h-5 w-5" />
+              </div>
+              <p className="text-xs font-bold text-slate-400">آخر تحديث</p>
+              <p className="mt-1 text-base font-black text-slate-800">
+                اليوم، {formatTime(lastSaved)}
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 text-right shadow-sm">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-purple-50 text-purple-600">
+                <FileCheck2 className="h-5 w-5" />
+              </div>
+              <p className="text-xs font-bold text-slate-400">التوقيعات</p>
+              <p className="mt-1 text-base font-black text-slate-800">
+                {completedSignatures} من {SIGNATURE_FIELDS.length}
+              </p>
+            </div>
           </div>
-          <div className="text-right">
-            <div className="flex items-center justify-end gap-2 mb-0.5">
-              <p className="text-sm font-bold text-slate-800">مستشفيات جامعة القاهرة</p>
-              <div className="w-7 h-7 flex items-center justify-center bg-sky-50 border border-sky-100 rounded-lg">
-                <Building2 className="w-3.5 h-3.5 text-sky-600" />
-              </div>
+
+          {approved && (
+            <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-right text-sm font-bold text-emerald-700">
+              تم اعتماد التقرير بنجاح، ويمكن الآن طباعته أو إرساله للمراجعة النهائية.
             </div>
-            <p className="text-xs text-slate-500">
-              يرجى إدخال بيانات المديونيات والمستحقات وتحديد الفترة الزمنية لكل منها.
-              <span className="text-emerald-600 font-medium"> يتم حفظ التغييرات تلقائياً كمسودة.</span>
+          )}
+
+          <div className="mb-5 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-right shadow-sm">
+            <p className="text-sm font-medium leading-7 text-slate-500">
+              أدخل بيانات المستحقات والمديونيات، ثم أرفق التوقيعات أو الختم لاعتماد التقرير.
+              يتم حفظ التغييرات تلقائياً أثناء العمل.
             </p>
           </div>
-        </div>
 
-        {/* Two data-entry cards */}
-        {/* DOM first → visual RIGHT in RTL = receivables (green) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
-
-          {/* ─── RECEIVABLES CARD ─── */}
-          <div className="bg-white rounded-2xl border border-emerald-100 shadow-sm overflow-hidden flex flex-col">
-            {/* Card header */}
-            <div className="bg-gradient-to-l from-emerald-50 to-white border-b border-emerald-100 px-5 py-4 flex items-center justify-between">
-              <div className="w-8 h-8 flex items-center justify-center bg-emerald-100 rounded-lg">
-                <TrendingUp className="w-4 h-4 text-emerald-600" strokeWidth={2} />
-              </div>
-              <h3 className="font-bold text-emerald-700 text-sm">إجمالي المستحقات</h3>
-            </div>
-
-            <div className="p-4 flex-1 space-y-4">
-              {/* Date range */}
-              <DateRangePicker
-                fromDate={recv.from}
-                toDate={recv.to}
-                onFromChange={(v) => setRecv(p => ({ ...p, from: v }))}
-                onToChange={(v) => setRecv(p => ({ ...p, to: v }))}
-                accentColor="green"
-              />
-
-              {/* 2×2 fields grid */}
-              {/* In RTL: first DOM column = visual RIGHT */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <FormInputField label="نفقة دولة"   value={recv.stateExpense}    onChange={updateRecv('stateExpense')} />
-                <FormInputField label="تأمين صحي"   value={recv.healthInsurance} onChange={updateRecv('healthInsurance')} />
-                <FormInputField
-                  label="تأمين صحي شامل"
-                  value={recv.comprehensiveInsurance}
-                  onChange={updateRecv('comprehensiveInsurance')}
-                  special
-                />
-                <FormInputField label="قوائم انتظار" value={recv.waitingList}     onChange={updateRecv('waitingList')} />
-              </div>
-            </div>
-
-            {/* Footer total */}
-            <div className="bg-emerald-50/60 border-t border-emerald-100 px-5 py-3 flex items-center justify-between">
-              <span className="text-emerald-600 font-bold text-base tabular-nums">
-                {fmt(recvTotal)}
-                <span className="text-xs font-semibold text-emerald-400 mr-1.5">EGP</span>
-              </span>
-              <span className="text-sm font-semibold text-emerald-700">إجمالي المستحقات</span>
-            </div>
-          </div>
-
-          {/* ─── DEBTS CARD ─── */}
-          <div className="bg-white rounded-2xl border border-red-100 shadow-sm overflow-hidden flex flex-col">
-            {/* Card header */}
-            <div className="bg-gradient-to-l from-red-50 to-white border-b border-red-100 px-5 py-4 flex items-center justify-between">
-              <div className="w-8 h-8 flex items-center justify-center bg-red-100 rounded-lg">
-                <TrendingDown className="w-4 h-4 text-red-600" strokeWidth={2} />
-              </div>
-              <h3 className="font-bold text-red-700 text-sm">إجمالي المديونية لهيئة الشراء الموحد</h3>
-            </div>
-
-            <div className="p-4 flex-1 space-y-4">
-              {/* Date range */}
-              <DateRangePicker
-                fromDate={debt.from}
-                toDate={debt.to}
-                onFromChange={(v) => setDebt(p => ({ ...p, from: v }))}
-                onToChange={(v) => setDebt(p => ({ ...p, to: v }))}
-                accentColor="red"
-              />
-
-              {/* Single-column fields with currency indicator */}
-              <div className="space-y-3">
-                <FormInputField label="المجاني"    value={debt.free}     onChange={updateDebt('free')}     showCurrency />
-                <FormInputField label="الاقتصادي"  value={debt.economic} onChange={updateDebt('economic')} showCurrency />
-              </div>
-            </div>
-
-            {/* Footer total */}
-            <div className="bg-red-50/60 border-t border-red-100 px-5 py-3 flex items-center justify-between">
-              <span className="text-red-600 font-bold text-base tabular-nums">
-                {fmt(debtTotal)}
-                <span className="text-xs font-semibold text-red-300 mr-1.5">EGP</span>
-              </span>
-              <span className="text-sm font-semibold text-red-700">إجمالي المديونية</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Net balance */}
-        <div className="bg-white rounded-xl border border-slate-200 px-5 py-3.5 mb-5 shadow-sm flex items-center justify-between">
-          <span className={`font-bold text-lg tabular-nums ${recvTotal - debtTotal >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-            {recvTotal - debtTotal >= 0 ? '+' : ''}{fmt(recvTotal - debtTotal)}
-            <span className="text-xs font-semibold opacity-60 mr-1.5">EGP</span>
-          </span>
-          <span className="text-sm font-semibold text-slate-600">صافي المركز المالي</span>
-        </div>
-
-        {/* Signature section */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-5">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-end gap-2.5">
-            <h3 className="text-sm font-bold text-slate-700">الاعتمادات والتوقيعات الرسمية</h3>
-            <div className="w-8 h-8 flex items-center justify-center bg-slate-100 rounded-lg">
-              <PenLine className="w-4 h-4 text-slate-500" />
-            </div>
-          </div>
-          <div className="p-5">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {[
-                { title: 'توقيع المدير',  sub: 'إدراج التوقيع الإلكتروني', type: 'pen' },
-                { title: 'ختم الجهة',    sub: 'إرفاق صورة الختم',         type: 'seal' },
-                { title: 'توقيع العميد', sub: 'إدراج التوقيع الإلكتروني', type: 'pen' },
-              ].map((sig, i) => (
-                <div
-                  key={i}
-                  className="border-2 border-dashed border-slate-200 rounded-xl p-4 flex flex-col items-center justify-between min-h-28 hover:border-sky-300 hover:bg-sky-50/30 transition-all cursor-pointer group"
-                >
-                  <div className="text-right w-full">
-                    <p className="text-sm font-semibold text-slate-700">{sig.title}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">{sig.sub}</p>
-                  </div>
-                  <div className="w-10 h-10 rounded-full border-2 border-dashed border-slate-200 group-hover:border-sky-400 transition-colors flex items-center justify-center">
-                    {sig.type === 'seal'
-                      ? <Award className="w-5 h-5 text-slate-300 group-hover:text-sky-400 transition-colors" />
-                      : <PenLine className="w-4 h-4 text-slate-300 group-hover:text-sky-400 transition-colors" />
-                    }
-                  </div>
+          <div className="mb-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
+            <div className="flex flex-col overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-sm">
+              <div className="flex items-center justify-start gap-3 border-b border-emerald-100 bg-gradient-to-l from-emerald-50 to-white px-5 py-4">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100">
+                  <TrendingUp className="h-4 w-4 text-emerald-600" />
                 </div>
-              ))}
+                <h3 className="text-sm font-black text-emerald-700">
+                  إجمالي المستحقات
+                </h3>
+              </div>
+
+              <div className="flex-1 space-y-4 p-4">
+                <DateRangePicker
+                  fromDate={recv.from}
+                  toDate={recv.to}
+                  onFromChange={(value) =>
+                    setRecv((prev) => ({ ...prev, from: value }))
+                  }
+                  onToChange={(value) =>
+                    setRecv((prev) => ({ ...prev, to: value }))
+                  }
+                  accentColor="green"
+                />
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <FormInputField
+                    label="نفقة دولة"
+                    value={recv.stateExpense}
+                    onChange={updateRecv('stateExpense')}
+                  />
+                  <FormInputField
+                    label="تأمين صحي"
+                    value={recv.healthInsurance}
+                    onChange={updateRecv('healthInsurance')}
+                  />
+                  <FormInputField
+                    label="تأمين صحي شامل"
+                    value={recv.comprehensiveInsurance}
+                    onChange={updateRecv('comprehensiveInsurance')}
+                  />
+                  <FormInputField
+                    label="قوائم انتظار"
+                    value={recv.waitingList}
+                    onChange={updateRecv('waitingList')}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between border-t border-emerald-100 bg-emerald-50/60 px-5 py-3">
+                <span className="text-base font-black tabular-nums text-emerald-600" dir="ltr">
+                  {fmt(recvTotal)}
+                  <span className="ml-1.5 text-xs font-bold text-emerald-400">
+                    EGP
+                  </span>
+                </span>
+                <span className="text-sm font-black text-emerald-700">
+                  إجمالي المستحقات
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col overflow-hidden rounded-3xl border border-red-100 bg-white shadow-sm">
+              <div className="flex items-center justify-start gap-3 border-b border-red-100 bg-gradient-to-l from-red-50 to-white px-5 py-4">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-100">
+                  <TrendingDown className="h-4 w-4 text-red-600" />
+                </div>
+                <h3 className="text-sm font-black text-red-700">
+                  إجمالي المديونية لهيئة الشراء الموحد
+                </h3>
+              </div>
+
+              <div className="flex-1 space-y-4 p-4">
+                <DateRangePicker
+                  fromDate={debt.from}
+                  toDate={debt.to}
+                  onFromChange={(value) =>
+                    setDebt((prev) => ({ ...prev, from: value }))
+                  }
+                  onToChange={(value) =>
+                    setDebt((prev) => ({ ...prev, to: value }))
+                  }
+                  accentColor="red"
+                />
+
+                <div className="space-y-3">
+                  <FormInputField
+                    label="المجاني"
+                    value={debt.free}
+                    onChange={updateDebt('free')}
+                    showCurrency
+                  />
+                  <FormInputField
+                    label="الاقتصادي"
+                    value={debt.economic}
+                    onChange={updateDebt('economic')}
+                    showCurrency
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between border-t border-red-100 bg-red-50/60 px-5 py-3">
+                <span className="text-base font-black tabular-nums text-red-600" dir="ltr">
+                  {fmt(debtTotal)}
+                  <span className="ml-1.5 text-xs font-bold text-red-300">
+                    EGP
+                  </span>
+                </span>
+                <span className="text-sm font-black text-red-700">
+                  إجمالي المديونية
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Action buttons */}
-        <div className="flex items-center gap-3 justify-start">
-          <button className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors shadow-sm">
-            <CheckCircle2 className="w-4 h-4" />
-            <span>اعتماد وحفظ التقرير</span>
-          </button>
-          <button className="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold px-5 py-2.5 rounded-xl border border-slate-200 transition-colors shadow-sm">
-            <Printer className="w-4 h-4" />
-            <span>معاينة وطباعة</span>
-          </button>
+          <div className="mb-5 flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+            <span
+              dir="ltr"
+              className={`text-lg font-black tabular-nums ${
+                netBalance >= 0 ? 'text-emerald-600' : 'text-red-600'
+              }`}
+            >
+              {netBalance >= 0 ? '+' : ''}
+              {fmt(netBalance)}
+              <span className="ml-1.5 text-xs font-bold opacity-60">EGP</span>
+            </span>
+            <span className="text-sm font-black text-slate-600">
+              صافي المركز المالي
+            </span>
+          </div>
+
+          <div className="mb-5 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <div className="flex items-center justify-start gap-2.5 border-b border-slate-100 px-5 py-4">
+              <h3 className="text-sm font-black text-slate-700">
+                الاعتمادات والتوقيعات الرسمية
+              </h3>
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100">
+                <PenLine className="h-4 w-4 text-slate-500" />
+              </div>
+            </div>
+
+            <div className="p-5">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                {SIGNATURE_FIELDS.map((signature) => {
+                  const image = signatures[signature.id]
+
+                  return (
+                    <button
+                      key={signature.id}
+                      type="button"
+                      onClick={() => setActiveSignature(signature.id)}
+                      className="flex min-h-36 cursor-pointer flex-col items-center justify-between rounded-2xl border-2 border-dashed border-slate-200 p-4 text-right transition-all hover:border-sky-300 hover:bg-sky-50/30"
+                    >
+                      <div className="w-full">
+                        <p className="text-sm font-black text-slate-700">
+                          {signature.title}
+                        </p>
+                        <p className="mt-1 text-xs font-medium text-slate-400">
+                          {image ? 'تم إرفاق الصورة' : signature.sub}
+                        </p>
+                      </div>
+
+                      {image ? (
+                        <img
+                          src={image}
+                          alt={signature.title}
+                          className="mt-3 max-h-16 max-w-full rounded-xl object-contain"
+                        />
+                      ) : (
+                        <div className="mt-3 flex h-11 w-11 items-center justify-center rounded-full border-2 border-dashed border-slate-200">
+                          {signature.type === 'seal' ? (
+                            <Award className="h-5 w-5 text-slate-300" />
+                          ) : (
+                            <PenLine className="h-4 w-4 text-slate-300" />
+                          )}
+                        </div>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-start">
+            <button className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
+              <span>معاينة وطباعة</span>
+              <Printer className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setApproved(true)}
+              className="flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-slate-800"
+            >
+              <span>اعتماد وحفظ التقرير</span>
+              <CheckCircle2 className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
+
+      <SignatureUploadModal
+        open={Boolean(activeSignature)}
+        title={selectedSignatureField?.title}
+        subtitle="ارفع صورة واضحة للتوقيع أو الختم ليتم عرضها داخل التقرير."
+        currentImage={signatures[activeSignature]}
+        onClose={() => setActiveSignature(null)}
+        onSave={(image) => {
+          setApproved(false)
+          setSignatures((prev) => ({ ...prev, [activeSignature]: image }))
+        }}
+        onRemove={() => {
+          setApproved(false)
+          setSignatures((prev) => {
+            const next = { ...prev }
+            delete next[activeSignature]
+            return next
+          })
+        }}
+      />
     </MainLayout>
   )
 }

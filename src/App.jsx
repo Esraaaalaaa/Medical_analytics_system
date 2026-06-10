@@ -15,12 +15,17 @@ import Statistics from './pages/Statistics'
 import PresidentStatistics from './pages/PresidentStatistics'
 import DirectorStatistics from './pages/DirectorStatistics'
 
+const MAIN_ROLES = ['secretary', 'president', 'director']
+
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/login/credentials" element={<LoginCredentials />} />
+
+        <Route path="/" element={<Navigate to="/home" replace />} />
+
         <Route
           path="/home"
           element={
@@ -29,39 +34,43 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/" element={<Navigate to="/president-finance" replace />} />
+
         <Route
           path="/urgent"
           element={
-            <ProtectedRoute allowedRoles={['director']}>
+            <ProtectedRoute allowedRoles={MAIN_ROLES}>
               <UrgentCirculars />
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/news"
           element={
-            <ProtectedRoute allowedRoles={['director']}>
+            <ProtectedRoute allowedRoles={MAIN_ROLES}>
               <News />
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/meetings"
           element={
-            <ProtectedRoute allowedRoles={['director']}>
+            <ProtectedRoute allowedRoles={MAIN_ROLES}>
               <Meetings />
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/mailbox"
           element={
-            <ProtectedRoute allowedRoles={['director']}>
+            <ProtectedRoute allowedRoles={MAIN_ROLES}>
               <Mailbox />
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/statistics"
           element={
@@ -70,38 +79,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/president-finance"
-          element={
-            <ProtectedRoute allowedRoles={['president', 'director']}>
-              <PresidentFinance />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/director-finance"
-          element={
-            <ProtectedRoute allowedRoles={['director']}>
-              <DirectorFinance />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/director-finance/:hospitalId"
-          element={
-            <ProtectedRoute allowedRoles={['director']}>
-              <DirectorFinance />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/periodic-report"
-          element={
-            <ProtectedRoute allowedRoles={['secretary', 'director']}>
-              <PeriodicReport />
-            </ProtectedRoute>
-          }
-        />
+
         <Route
           path="/statistics/president"
           element={
@@ -110,6 +88,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/statistics/director"
           element={
@@ -118,6 +97,44 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/president-finance"
+          element={
+            <ProtectedRoute allowedRoles={['president']}>
+              <PresidentFinance />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/director-finance"
+          element={
+            <ProtectedRoute allowedRoles={['director']}>
+              <DirectorFinance />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/director-finance/:hospitalId"
+          element={
+            <ProtectedRoute allowedRoles={['director']}>
+              <DirectorFinance />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/periodic-report"
+          element={
+            <ProtectedRoute allowedRoles={['secretary']}>
+              <PeriodicReport />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="*" element={<Navigate to="/home" replace />} />
       </Routes>
     </BrowserRouter>
   )

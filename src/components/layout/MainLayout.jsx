@@ -8,7 +8,7 @@ export default function MainLayout({ children, userName, userSub, activeNavId })
   return (
     <div
       dir="rtl"
-      className="flex h-screen w-full bg-background flex-col md:flex-row font-body overflow-hidden"
+      className="flex h-screen w-full flex-col overflow-hidden bg-slate-50 font-body md:flex-row"
     >
       <Sidebar
         userName={userName}
@@ -18,23 +18,25 @@ export default function MainLayout({ children, userName, userSub, activeNavId })
         onClose={() => setSidebarOpen(false)}
       />
 
-      {/* Mobile backdrop */}
       {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+        <button
+          type="button"
+          aria-label="إغلاق القائمة"
+          className="fixed inset-0 z-30 bg-black/50 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      <main className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
-        <header className="md:hidden bg-primary text-primary-foreground p-4 flex items-center justify-between shrink-0">
+      <main className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-primary p-4 text-primary-foreground md:hidden">
           <div className="flex items-center gap-2">
             <Shield className="text-secondary" size={20} strokeWidth={1.75} />
             <div className="text-lg font-bold font-headings">UH-CONNECT</div>
           </div>
+
           <button
             type="button"
-            className="p-1"
+            className="rounded-lg p-2 transition-colors hover:bg-white/10"
             aria-label="القائمة"
             onClick={() => setSidebarOpen(true)}
           >
@@ -42,7 +44,7 @@ export default function MainLayout({ children, userName, userSub, activeNavId })
           </button>
         </header>
 
-        <div className="flex-1 overflow-y-auto bg-muted/10 relative">
+        <div className="relative flex-1 overflow-y-auto bg-slate-50/80">
           {children}
         </div>
       </main>

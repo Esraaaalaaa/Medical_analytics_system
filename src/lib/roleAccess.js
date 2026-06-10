@@ -1,50 +1,35 @@
-const LOGIN_PATHS = ['/login', '/login/credentials', '/login/']
+﻿import {
+  LOGIN_PATHS,
+  NAV_ITEMS,
+  flattenNavItems,
+  isPathMatch,
+  isRoleAllowed,
+} from '../config/navigation'
+
+const STATIC_ALLOWED_PATHS = ['/home']
 
 /**
  * Role-based access control for routes and navigation items.
  * Session role values come from `src/lib/authRoles.js` keys.
  */
 export function canAccessPath(role, pathname) {
-  // Always allow login pages
   if (LOGIN_PATHS.includes(pathname)) return true
-
-  // Admin can access everything
   if (role === 'admin') return true
+  if (STATIC_ALLOWED_PATHS.includes(pathname)) return Boolean(role)
 
-  if (role === 'director') {
-    return (
-      pathname === '/home' ||
-      pathname === '/urgent' ||
-      pathname === '/news' ||
-      pathname === '/meetings' ||
-      pathname === '/mailbox' ||
-      pathname === '/statistics/director' ||
-      pathname === '/director-finance/alexandria' ||
-      pathname.startsWith('/director-finance/')
-    )
-  }
+  const navItem = flattenNavItems(NAV_ITEMS).find((item) =>
+    isPathMatch(item, pathname),
+  )
 
-  if (role === 'president') {
-    return (
-      pathname === '/home' ||
-      pathname === '/statistics/president' ||
-      pathname === '/president-finance'
-    )
-  }
+  if (!navItem) return false
 
-  if (role === 'secretary') {
-    return (
-      pathname === '/home' ||
-      pathname === '/statistics' ||
-      pathname === '/periodic-report'
-    )
-  }
-
-  return false
+  return isRoleAllowed(role, navItem.allowedRoles)
 }
 
 export function roleAllowedRolesForPath(pathname) {
-  // Kept for future extension; currently not used.
-  return null
-}
+  const navItem = flattenNavItems(NAV_ITEMS).find((item) =>
+    isPathMatch(item, pathname),
+  )
 
+  return navItem?.allowedRoles ?? null
+}

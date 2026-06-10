@@ -1,234 +1,455 @@
-import { useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 import MainLayout from '../components/layout/MainLayout'
+import PageHeader from '../components/ui/PageHeader'
+import { getSession } from '../lib/authSession'
+import { getRoleProfile } from '../lib/authRoles'
 import {
-  Trash2, Forward, Search, Download,
-  FileText, Send, Image, Paperclip,
+  Mail,
+  Search,
+  Send,
+  Archive,
+  Inbox,
+  Clock,
+  AlertTriangle,
+  CheckCircle2,
+  Paperclip,
+  Reply,
 } from 'lucide-react'
 
-const MESSAGES = [
+const INITIAL_MESSAGES = [
   {
     id: 1,
-    sender: 'د. محمد علي',
-    initials: 'م',
-    avatarBg: 'bg-slate-600',
-    subject: 'مراجعة تقرير الربع الثالث',
-    preview: 'يرجى التكرم بمراجعة الأرقام الواردة في...',
-    time: '10:42 ص',
-    read: true,
-    body: [
-      'السيد الفاضل،',
-      'تحية طيبة وبعد،',
-      'يرجى التكرم بمراجعة الأرقام الواردة في تقرير المستحقات الخاص بالربع الثالث من العام الحالي، حيث لوحظ وجود بعض التفاوتات في بنود قوائم الانتظار مقارنة بالتقارير السابقة.',
-      'برجاء الإفادة في أقرب وقت ممكن لاعتماد التقرير النهائي.',
-      'وتفضلوا بقبول فائق الاحترام.',
-    ],
-    attachment: { name: 'report_Q3_v2.pdf', size: 'MB 1.2' },
+    folder: 'inbox',
+    sender: 'أمانة المجلس الأعلى للمستشفيات الجامعية',
+    subject: 'تحديث بيانات المؤشرات الطبية لشهر يونيو',
+    body:
+      'يرجى مراجعة بيانات المؤشرات الطبية الخاصة بالمستشفى والتأكد من اكتمال البيانات قبل نهاية الأسبوع الجاري.',
+    date: '10 يونيو 2026',
+    time: '10:30 ص',
+    priority: 'high',
+    read: false,
+    hasAttachment: true,
   },
   {
     id: 2,
-    sender: 'إدارة الشؤون المالية',
-    initials: 'ش',
-    avatarBg: 'bg-blue-600',
-    subject: 'اعتماد مخصصات جديدة',
-    preview: 'نود إعلامكم بأنه تم الموافقة على...',
-    time: 'أمس',
-    read: false,
-    body: [
-      'تحية طيبة،',
-      'نود إعلامكم بأنه تم الموافقة على المخصصات الجديدة للعام المقبل وفق المعدلات المرفقة للاطلاع والاعتماد.',
-      'وتفضلوا بقبول التحيات.',
-    ],
-    attachment: null,
+    folder: 'inbox',
+    sender: 'الإدارة المالية',
+    subject: 'مراجعة المستحقات والمديونيات',
+    body:
+      'برجاء مراجعة بنود المستحقات والمديونيات وإرسال أي ملاحظات قبل اعتماد الملخص المالي النهائي.',
+    date: '9 يونيو 2026',
+    time: '2:15 م',
+    priority: 'normal',
+    read: true,
+    hasAttachment: false,
   },
   {
     id: 3,
-    sender: 'مدير مستشفيات بنها',
-    initials: 'ب',
-    avatarBg: 'bg-emerald-600',
-    subject: 'تنسيق حالات الانتظار',
-    preview: 'بخصوص الحالات المحولة من طرفكم...',
-    time: 'الثلاثاء',
+    folder: 'inbox',
+    sender: 'وحدة المتابعة',
+    subject: 'اجتماع متابعة الأداء الأسبوعي',
+    body:
+      'تم تحديد اجتماع متابعة الأداء الأسبوعي لمناقشة مؤشرات التشغيل والالتزام بإرسال التقارير في المواعيد المحددة.',
+    date: '8 يونيو 2026',
+    time: '12:00 م',
+    priority: 'normal',
     read: true,
-    body: [
-      'تحية طيبة،',
-      'بخصوص الحالات المحولة من طرفكم، نرجو التنسيق المسبق قبل أي إحالة جديدة لضمان توفر الطاقة الاستيعابية اللازمة.',
-      'شكراً لتعاونكم.',
-    ],
-    attachment: null,
+    hasAttachment: false,
+  },
+  {
+    id: 4,
+    folder: 'sent',
+    sender: 'أنت',
+    subject: 'رد: مراجعة المستحقات والمديونيات',
+    body:
+      'تمت مراجعة البيانات المالية، وسيتم إرسال النسخة النهائية بعد استكمال التوقيعات المطلوبة.',
+    date: '7 يونيو 2026',
+    time: '4:40 م',
+    priority: 'normal',
+    read: true,
+    hasAttachment: false,
+  },
+  {
+    id: 5,
+    folder: 'archive',
+    sender: 'إدارة النظم',
+    subject: 'تحديث صلاحيات المستخدمين',
+    body:
+      'تم تحديث صلاحيات المستخدمين وفقاً للهيكل المعتمد، ويمكنكم استخدام النظام بصورة طبيعية.',
+    date: '5 يونيو 2026',
+    time: '9:10 ص',
+    priority: 'low',
+    read: true,
+    hasAttachment: false,
   },
 ]
 
+const FOLDERS = [
+  {
+    id: 'inbox',
+    label: 'الوارد',
+    icon: Inbox,
+  },
+  {
+    id: 'sent',
+    label: 'المرسل',
+    icon: Send,
+  },
+  {
+    id: 'archive',
+    label: 'الأرشيف',
+    icon: Archive,
+  },
+]
+
+const PRIORITY_META = {
+  high: {
+    label: 'هام',
+    className: 'border-red-200 bg-red-50 text-red-600',
+    icon: AlertTriangle,
+  },
+  normal: {
+    label: 'عادي',
+    className: 'border-sky-200 bg-sky-50 text-sky-700',
+    icon: Clock,
+  },
+  low: {
+    label: 'للمتابعة',
+    className: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    icon: CheckCircle2,
+  },
+}
+
+function PriorityBadge({ priority }) {
+  const meta = PRIORITY_META[priority] ?? PRIORITY_META.normal
+  const Icon = meta.icon
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-black ${meta.className}`}
+    >
+      <span>{meta.label}</span>
+      <Icon className="h-3.5 w-3.5" />
+    </span>
+  )
+}
+
+function MessageListItem({ message, selected, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`block w-full border-b border-slate-100 p-4 text-right transition-colors hover:bg-slate-50 ${
+        selected ? 'bg-sky-50' : 'bg-white'
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1 text-right">
+          <div className="mb-1 flex items-center justify-start gap-2">
+            {!message.read && (
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-sky-500" />
+            )}
+
+            <p className="min-w-0 truncate text-sm font-black text-slate-900">
+              {message.sender}
+            </p>
+          </div>
+
+          <p className="truncate text-sm font-bold text-slate-700">
+            {message.subject}
+          </p>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-2 pt-0.5">
+          {message.hasAttachment && (
+            <Paperclip className="h-4 w-4 text-slate-400" />
+          )}
+        </div>
+      </div>
+
+      <p className="mt-2 line-clamp-2 text-right text-xs font-medium leading-6 text-slate-500">
+        {message.body}
+      </p>
+
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <span className="text-xs font-bold text-slate-400">
+          {message.date} - {message.time}
+        </span>
+
+        <PriorityBadge priority={message.priority} />
+      </div>
+    </button>
+  )
+}
+
 export default function Mailbox() {
+  const session = getSession()
+  const profile = getRoleProfile(session?.role)
+
+  const [messages, setMessages] = useState(INITIAL_MESSAGES)
+  const [folder, setFolder] = useState('inbox')
+  const [search, setSearch] = useState('')
   const [selectedId, setSelectedId] = useState(1)
-  const [msgs, setMsgs]             = useState(MESSAGES)
-  const [reply, setReply]           = useState('')
+  const [replyText, setReplyText] = useState('')
+  const [toast, setToast] = useState('')
 
-  const selected = msgs.find(m => m.id === selectedId)
+  const filteredMessages = useMemo(() => {
+    return messages.filter((message) => {
+      const matchesFolder = message.folder === folder
+      const matchesSearch =
+        !search ||
+        message.sender.includes(search) ||
+        message.subject.includes(search) ||
+        message.body.includes(search)
 
-  const handleSelect = (id) => {
-    setSelectedId(id)
-    setMsgs(prev => prev.map(m => m.id === id ? { ...m, read: true } : m))
+      return matchesFolder && matchesSearch
+    })
+  }, [messages, folder, search])
+
+  const selectedMessage = useMemo(() => {
+    return (
+      messages.find((message) => message.id === selectedId) ||
+      filteredMessages[0] ||
+      null
+    )
+  }, [messages, selectedId, filteredMessages])
+
+  const folderCounts = useMemo(() => {
+    return FOLDERS.reduce((acc, item) => {
+      acc[item.id] = messages.filter((message) => message.folder === item.id).length
+      return acc
+    }, {})
+  }, [messages])
+
+  const unreadCount = messages.filter(
+    (message) => message.folder === 'inbox' && !message.read,
+  ).length
+
+  const handleSelectMessage = (message) => {
+    setSelectedId(message.id)
+    setReplyText('')
+    setToast('')
+
+    if (!message.read) {
+      setMessages((prev) =>
+        prev.map((item) =>
+          item.id === message.id ? { ...item, read: true } : item,
+        ),
+      )
+    }
+  }
+
+  const handleArchive = () => {
+    if (!selectedMessage || selectedMessage.folder === 'archive') return
+
+    setMessages((prev) =>
+      prev.map((message) =>
+        message.id === selectedMessage.id
+          ? { ...message, folder: 'archive', read: true }
+          : message,
+      ),
+    )
+
+    setFolder('archive')
+    setToast('تم نقل الرسالة إلى الأرشيف.')
+  }
+
+  const handleSendReply = () => {
+    if (!selectedMessage || !replyText.trim()) return
+
+    const replyMessage = {
+      id: Date.now(),
+      folder: 'sent',
+      sender: 'أنت',
+      subject: `رد: ${selectedMessage.subject}`,
+      body: replyText.trim(),
+      date: 'اليوم',
+      time: 'الآن',
+      priority: 'normal',
+      read: true,
+      hasAttachment: false,
+    }
+
+    setMessages((prev) => [replyMessage, ...prev])
+    setReplyText('')
+    setFolder('sent')
+    setSelectedId(replyMessage.id)
+    setToast('تم إرسال الرد بنجاح.')
   }
 
   return (
-    <MainLayout>
-      {/* dir="ltr": first child → LEFT (detail), second child → RIGHT (list) */}
-      <div dir="ltr" className="flex h-full overflow-hidden  max-w-8xl" >
+    <MainLayout userName={profile?.userName} userSub={profile?.userSub}>
+      <div dir="rtl" className="px-4 py-6 md:px-8">
+        <div className="mx-auto max-w-7xl">
+          <PageHeader
+            title="صندوق البريد"
+            subtitle="متابعة الرسائل الواردة والصادرة وحفظ الرسائل المهمة"
+            icon={Mail}
+            leftContent={
+              <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-black text-sky-700">
+                غير مقروء: <span dir="ltr">{unreadCount}</span>
+              </div>
+            }
+          />
 
-        {/* ── LEFT: detail pane ── */}
-        <div className="flex-1 flex flex-col overflow-hidden border-r border-slate-200">
+          {toast && (
+            <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-right text-sm font-bold text-emerald-700">
+              {toast}
+            </div>
+          )}
 
-          {/* Action bar */}
-          <div className="flex items-center gap-1 px-5 py-3 border-b border-slate-200 shrink-0">
-            <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-              <Trash2 className="w-4 h-4 text-slate-500" />
-            </button>
-            <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-              <Forward className="w-4 h-4 text-slate-500" />
-            </button>
-          </div>
-
-          {/* Scrollable email body */}
-          <div className="flex-1 overflow-y-auto px-10 py-7" dir="rtl">
-            {selected && (
-              <>
-                {/* Subject */}
-                <h2 className="text-[20px] font-bold text-slate-800 mb-5 leading-snug">
-                  {selected.subject}
-                </h2>
-
-                {/* Sender info — avatar second in RTL flex = LEFT */}
-                <div className="flex items-start gap-3 mb-8">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-slate-700 text-[14px]">{selected.sender}</p>
-                    <p className="text-slate-400 text-[12.5px] mt-0.5">
-                      إلى: أنت • {selected.time} صباحاً
-                    </p>
-                  </div>
-                  <div className={`w-10 h-10 rounded-full ${selected.avatarBg}
-                    flex items-center justify-center shrink-0 text-white font-bold text-[15px]`}>
-                    {selected.initials}
-                  </div>
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[380px_minmax(0,1fr)]">
+            <aside className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+              <div className="border-b border-slate-100 p-4">
+                <div className="relative">
+                  <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="بحث في الرسائل..."
+                    dir="rtl"
+                    className="w-full rounded-2xl border border-slate-200 py-3 pl-4 pr-9 text-right text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-sky-300 focus:ring-2 focus:ring-sky-100"
+                  />
                 </div>
 
-                {/* Body */}
-                <div className="text-slate-700 text-[14px] leading-[2.1] space-y-4">
-                  {selected.body.map((para, i) => (
-                    <p key={i}>{para}</p>
-                  ))}
-                </div>
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {FOLDERS.map((item) => {
+                    const Icon = item.icon
 
-                {/* Attachment — in RTL: [pdf-icon RIGHT] [name] [download LEFT] */}
-                {selected.attachment && (
-                  <div className="mt-8 inline-flex items-center gap-3
-                    border border-slate-200 rounded-xl p-3 bg-slate-50">
-                    <div className="w-9 h-9 bg-red-100 rounded-lg flex items-center justify-center shrink-0">
-                      <FileText className="w-5 h-5 text-red-500" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-slate-700 text-[13px]">
-                        {selected.attachment.name}
-                      </p>
-                      <p className="text-slate-400 text-[11.5px]">{selected.attachment.size}</p>
-                    </div>
-                    <button className="p-1.5 hover:bg-slate-200 rounded-lg transition-colors shrink-0">
-                      <Download className="w-4 h-4 text-slate-500" />
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-
-          {/* Reply box — stays at the bottom */}
-          <div className="border-t border-slate-200 p-4 shrink-0">
-            <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
-              <textarea
-                value={reply}
-                onChange={e => setReply(e.target.value)}
-                placeholder="انقر هنا للرد..."
-                rows={3}
-                dir="rtl"
-                className="w-full px-4 pt-3 pb-2 text-slate-700 text-[13.5px] resize-none
-                  focus:outline-none placeholder:text-slate-400 block"
-              />
-              <div className="flex items-center justify-between px-3 pb-3 border-t border-slate-100 pt-2">
-                <button className="flex items-center gap-2 bg-[#0d1526] hover:bg-slate-800 text-white
-                  px-4 py-2 rounded-lg text-[13px] font-semibold transition-all duration-150">
-                  <Send className="w-3.5 h-3.5" />
-                  <span>إرسال</span>
-                </button>
-                <div className="flex gap-1">
-                  <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                    <Paperclip className="w-4 h-4 text-slate-400" />
-                  </button>
-                  <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                    <Image className="w-4 h-4 text-slate-400" />
-                  </button>
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          setFolder(item.id)
+                          setToast('')
+                        }}
+                        className={`rounded-2xl px-3 py-3 text-sm font-black transition-colors ${
+                          folder === item.id
+                            ? 'bg-slate-950 text-white'
+                            : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        <Icon className="mx-auto mb-1 h-4 w-4" />
+                        <span>{item.label}</span>
+                        <span className="mr-1" dir="ltr">
+                          ({folderCounts[item.id] || 0})
+                        </span>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
 
-        {/* ── RIGHT: message list ── */}
-        <div className="w-[285px] shrink-0 flex flex-col overflow-hidden bg-white"  max-w-8xl dir="rtl">
+              <div className="max-h-[620px] overflow-y-auto">
+                {filteredMessages.map((message) => (
+                  <MessageListItem
+                    key={message.id}
+                    message={message}
+                    selected={selectedMessage?.id === message.id}
+                    onClick={() => handleSelectMessage(message)}
+                  />
+                ))}
 
-          {/* Header */}
-          <div className="px-4 pt-5 pb-3 border-b border-slate-200 shrink-0">
-            <h2 className="text-[17px] font-bold text-slate-800 mb-3">صندوق البريد</h2>
-            <div className="relative">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="بحث في الرسائل..."
-                dir="rtl"
-                className="w-full pr-9 pl-3 py-2.5 rounded-xl border border-slate-200 text-[13px]
-                  text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2
-                  focus:ring-sky-200 focus:border-sky-300 transition-all"
-              />
-            </div>
-          </div>
+                {filteredMessages.length === 0 && (
+                  <div className="p-10 text-center text-sm font-bold text-slate-400">
+                    لا توجد رسائل مطابقة
+                  </div>
+                )}
+              </div>
+            </aside>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto">
-            {msgs.map(msg => (
-              <button
-                key={msg.id}
-                onClick={() => handleSelect(msg.id)}
-                className={`w-full text-right px-4 py-3.5 border-b border-slate-100
-                  transition-colors ${
-                  selectedId === msg.id
-                    ? 'bg-slate-100'
-                    : 'bg-white hover:bg-slate-50'
-                }`}
-              >
-                {/* Sender row: [sender + dot → RIGHT] [time → LEFT] in RTL justify-between */}
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className={`text-[13.5px] truncate ${
-                      !msg.read ? 'font-bold text-slate-900' : 'font-semibold text-slate-700'
-                    }`}>
-                      {msg.sender}
-                    </span>
-                    {!msg.read && (
-                      <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+            <section className="min-h-[640px] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+              {selectedMessage ? (
+                <div className="flex min-h-[640px] flex-col">
+                  <div className="border-b border-slate-100 p-5">
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0 flex-1 text-right">
+                          <div className="mb-3 flex items-center justify-start gap-2">
+                            <PriorityBadge priority={selectedMessage.priority} />
+
+                            {selectedMessage.hasAttachment && (
+                              <Paperclip className="h-4 w-4 text-slate-400" />
+                            )}
+                          </div>
+
+                          <h3 className="text-right text-xl font-black leading-8 text-slate-900">
+                            {selectedMessage.subject}
+                          </h3>
+
+                          <div className="mt-3 space-y-1 text-right">
+                            <p className="text-sm font-bold text-slate-500">
+                              من: {selectedMessage.sender}
+                            </p>
+                            <p className="text-xs font-bold text-slate-400">
+                              {selectedMessage.date} - {selectedMessage.time}
+                            </p>
+                          </div>
+                        </div>
+
+                        {selectedMessage.folder !== 'archive' && (
+                          <button
+                            type="button"
+                            onClick={handleArchive}
+                            className="flex shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50"
+                          >
+                            <span>أرشفة</span>
+                            <Archive className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 p-5">
+                    <div className="rounded-3xl border border-slate-100 bg-slate-50 p-5 text-right">
+                      <p className="whitespace-pre-line text-right text-sm font-medium leading-8 text-slate-700">
+                        {selectedMessage.body}
+                      </p>
+                    </div>
+
+                    {selectedMessage.folder === 'inbox' && (
+                      <div className="mt-5 rounded-3xl border border-slate-200 bg-white p-5">
+                        <div className="mb-3 flex items-center justify-start gap-2">
+                          <Reply className="h-4 w-4 text-slate-400" />
+                          <h4 className="text-sm font-black text-slate-900">
+                            كتابة رد
+                          </h4>
+                        </div>
+
+                        <textarea
+                          value={replyText}
+                          onChange={(event) => setReplyText(event.target.value)}
+                          rows={5}
+                          dir="rtl"
+                          placeholder="اكتب الرد هنا..."
+                          className="w-full resize-none rounded-2xl border border-slate-200 px-4 py-3 text-right text-sm text-slate-700 outline-none transition-all placeholder:text-slate-300 focus:border-sky-300 focus:ring-2 focus:ring-sky-100"
+                        />
+
+                        <div className="mt-3 flex justify-start">
+                          <button
+                            type="button"
+                            onClick={handleSendReply}
+                            disabled={!replyText.trim()}
+                            className="flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+                          >
+                            <span>إرسال الرد</span>
+                            <Send className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
                     )}
                   </div>
-                  <span className="text-[11.5px] text-slate-400 shrink-0">{msg.time}</span>
                 </div>
-
-                <p className={`text-[12.5px] truncate mb-0.5 ${
-                  !msg.read ? 'font-semibold text-slate-700' : 'text-slate-600'
-                }`}>
-                  {msg.subject}
-                </p>
-                <p className="text-[12px] text-slate-400 truncate">{msg.preview}</p>
-              </button>
-            ))}
+              ) : (
+                <div className="flex min-h-[640px] items-center justify-center p-10 text-center text-sm font-bold text-slate-400">
+                  اختر رسالة لعرض التفاصيل
+                </div>
+              )}
+            </section>
           </div>
         </div>
-
       </div>
     </MainLayout>
   )
